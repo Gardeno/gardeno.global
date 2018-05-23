@@ -129,6 +129,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'gardeno.global',
+    '172.30.1.161',
+    '34.227.47.75',
 ]
 
 PRODUCTION_SITE = False

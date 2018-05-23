@@ -52,9 +52,18 @@ cp gardeno/settings_env.example.prod.py gardeno/settings_env.py
 sudo ln -s /home/ubuntu/gardeno/config/uwsgi/gardeno.global.ini /etc/uwsgi/vassals/gardeno.global.ini 
 ```
     
+7) Test that uwsgi pulls in the config file with:
 
-http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
+```
+/usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
+```
 
+8) Link the gardeno nginx file and reload nginx with:
+
+```
+sudo ln -s /home/ubuntu/gardeno/config/nginx/gardeno.global /etc/nginx/sites-enabled/gardeno.global
+sudo /etc/init.d/nginx restart
+```
 
 
 # Some important commands
