@@ -1,3 +1,13 @@
+# Deployment instructions
+
+0) Install pip and virtualenv (instructions are for Ubuntu 16.04)
+
+```
+sudo apt-get install python3-pip
+sudo pip3 install --upgrade pip
+sudo pip3 install virtualenv
+```
+
 1) Setup virtualenv
 
 ```
@@ -21,6 +31,12 @@ pip install -r requirements.txt
 ```
 cp gardeno/settings_env.example.prod.py gardeno/settings_env.py
 ```
+
+5) Setup uwsgi / Django / Nginx using the following guide:
+
+http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
+
+
 
 # Some important commands
 

@@ -1,0 +1,37 @@
+upstream gardeno {
+    server unix:///tmp/gardeno.sock;
+}
+
+server {
+    listen      80;
+    server_name gardeno.global;
+    charset     utf-8;
+    if ($http_x_forwarded_proto = 'http') {
+         return 301 https://$server_name$request_uri;
+    }
+
+    client_max_body_size 75M; 
+
+    location /media  {
+        alias /home/ubuntu/gardeno/media;
+    }
+
+    location /static {
+	add_header "Access-Control-Allow-Origin"  *;
+        alias /home/ubuntu/gardeno/static;
+    }
+
+    location / {
+        if ($request_method ~* "(GET|POST)") {
+          add_header "Access-Control-Allow-Origin"  *;
+        }
+        if ($request_method = OPTIONS ) {
+          add_header "Access-Control-Allow-Origin"  *;
+          add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";
+          add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
+          return 200;
+        }
+        uwsgi_pass  gardeno;
+        include     /home/ubuntu/gardeno/config/uwsgi_params; # the uwsgi_params file you installed
+    }
+}
