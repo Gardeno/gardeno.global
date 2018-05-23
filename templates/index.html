@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block head_additional %}
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,900,900i" rel="stylesheet">
+    <style>
+        body, html {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            background-color: #5DFDCB;
+            color: white;
+            padding-top: 100px;
+            text-align: center;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="content">
+
+        <h1>Gardeno Foundation</h1>
+        <h2>Local Food. Better.</h2>
+
+    </div>
+
+
+{% endblock %}
