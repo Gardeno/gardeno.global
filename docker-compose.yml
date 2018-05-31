@@ -2,7 +2,9 @@ version: '3'
 
 services:
   db:
-    image: postgres
+    build:
+      context: .
+      dockerfile: ./config/dockerfiles/postgres/Dockerfile
   web:
     build:
       context: .

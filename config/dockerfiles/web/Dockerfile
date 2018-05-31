@@ -1,11 +1,8 @@
-FROM ubuntu:16.04
+FROM library/python:3.6.4-jessie
 
-RUN apt-get update
-RUN apt-get install -y software-properties-common htop
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN add-apt-repository -y ppa:ubuntugis/ppa
-RUN apt-get update
-RUN apt-get install -y gdal-bin python-gdal python3-gdal python3-pip
+RUN apt-get update && apt-get install -y binutils libproj-dev gdal-bin
 RUN pip3 install --upgrade pip
 
 ENV PYTHONUNBUFFERED 1
@@ -14,3 +11,5 @@ WORKDIR /code
 ADD ./src/requirements.txt /code/
 RUN pip3 install -r requirements.txt
 ADD ./src /code/
+
+ENV GDAL_LIBRARY_PATH /usr/lib/ogdi/libgdal.so
