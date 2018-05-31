@@ -78,17 +78,20 @@ python manage.py migrate
 
 # Colors
 
-Green
-#5DFDCB
+Red
+#FF7276
 
 Orange
-#FF8E72
-
-Grey
-#D9E5D6
+#F4B223
 
 Blue
-#00A7E1
+#57B6B2
 
-Yellow
-#EDDEA4
+Green
+#79DEA8
+
+Light Green
+#d0f4de
+
+Dark Green
+#2c3c44
