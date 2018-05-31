@@ -1,3 +1,14 @@
+# Running locally
+
+0) Install `docker-compose`: https://docs.docker.com/compose/
+
+1) Run `docker-compose`:
+
+```
+docker-compose build
+docker-compose up
+```
+
 # Deployment instructions
 
 0) Install pip and virtualenv (instructions are for Ubuntu 16.04)

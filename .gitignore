@@ -2,5 +2,5 @@
 *.pyc
 /venv/
 /config/ngrok.yml
-/gardeno/settings_env.py
+/src/gardeno/settings_env.py
 **/.DS_Store
