@@ -30,11 +30,78 @@
         gtag('config', '{{ google_analytics_id }}');
     </script>
 
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,900,900i" rel="stylesheet">
     <style>
         body, html {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #d0f4de;
+        }
+
+        a {
+            text-decoration: none;
+            color: #2c3c44;
+        }
+
+        h1, h2, h3, h4, h5 {
             margin: 0;
             padding: 0;
         }
+
+        ul, li {
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        .content {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100px;
+            bottom: 0;
+            background-color: #d0f4de;
+            color: #2c3c44;
+            padding-top: 100px;
+            text-align: center;
+        }
+
+        .content a, .content a:visited {
+            color: #2c3c44;
+        }
+
+        .content h2 {
+            display: block;
+            font-size: 1.5em;
+            -webkit-margin-before: 0.83em;
+            -webkit-margin-after: 0.83em;
+            -webkit-margin-start: 0px;
+            -webkit-margin-end: 0px;
+            font-weight: bold;
+        }
+
+        header {
+            height: 100px;
+            padding: 0 50px;
+        }
+
+        header ul {
+            float: right;
+        }
+
+        header li a {
+            line-height: 100px;
+        }
+
+        header h1 {
+            float: left;
+            line-height: 100px;
+        }
+
     </style>
 
     {% block head_additional %}{% endblock %}
@@ -42,7 +109,19 @@
 </head>
 <body>
 
-{% block content %}{% endblock %}
+
+<header>
+    <h1><a href="/">Gardeno</a></h1>
+    <ul>
+        <li>
+            <a href="/grows">Grows</a>
+        </li>
+    </ul>
+</header>
+
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
 
 {% block foot_additional %}{% endblock %}
 
