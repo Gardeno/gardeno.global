@@ -1,3 +1,5 @@
-from django.contrib import admin
+from django.contrib.gis import admin
+from .models import Grow, Rack
 
-# Register your models here.
+admin.site.register(Grow, admin.OSMGeoAdmin)
+admin.site.register(Rack, admin.OSMGeoAdmin)

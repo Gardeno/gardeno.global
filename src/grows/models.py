@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.gis.db import models
 
 
 class Grow(models.Model):
@@ -8,6 +9,19 @@ class Grow(models.Model):
     contained system that is comprised of individual grow components.
     """
     title = models.CharField(max_length=255, null=True)
+
+    '''
+    To update a PointField:
+
+    from django.contrib.gis.geos import Point
+    grow = Grow.objects.all()[0]
+    grow.location = Point(-104.813959, 39.752304)
+    grow.save()
+    '''
+    location = models.PointField(null=True)
+
+    def __str__(self):
+        return self.title
 
 
 class Rack(models.Model):
@@ -20,3 +34,6 @@ class Rack(models.Model):
     # Should we use some sort of internal GPS standard?
     grow = models.ForeignKey(Grow, null=True, blank=True,
                              on_delete=models.CASCADE)
+
+    def __str__(self):
+        return '{}'.format(self.grow.title if self.grow else 'No Grow')
