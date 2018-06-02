@@ -89,6 +89,11 @@
             padding: 0 50px;
         }
 
+        header img.logo {
+            height: 70px;
+            margin-top: 15px;
+        }
+
         header ul {
             float: right;
         }
@@ -111,7 +116,9 @@
 
 
 <header>
-    <h1><a href="/">Gardeno</a></h1>
+    <a href="/">
+        <img class="logo" src="{% static "images/logo-dark.png" %}" alt="Gardeno Logo"/>
+    </a>
     <ul>
         <li>
             <a href="/grows">Grows</a>

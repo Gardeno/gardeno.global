@@ -37,3 +37,12 @@ class Rack(models.Model):
 
     def __str__(self):
         return '{}'.format(self.grow.title if self.grow else 'No Grow')
+
+
+class Tray(models.Model):
+    """
+    A tray (also known as a 1020 flat) holds the product.
+    You can find a really good tray from the Bootstrap Farmer:
+        https://www.bootstrapfarmer.com/products/1020-trays-multi-color?variant=302800109582
+    """
+    rack = models.ForeignKey(Rack, null=True, blank=True, on_delete=models.CASCADE)
