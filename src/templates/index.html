@@ -4,12 +4,36 @@
 
 {% block head_additional %}
     <style>
+        .form-container {
+            width: 25%;
+            margin: 0 auto;
+        }
+
+        .form-container h4.error {
+            margin-bottom: 10px;
+            color: #ff7075;
+        }
+
+        form input {
+            text-align: center;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
-
-        <h2>Design coming soon!</h2>
-        <a href="https://99designs.com/brand-identity-pack/contests/gardeno-design-logo-hyper-local-salad-vegetable-delivery-826592">https://99designs.com/brand-identity-pack/contests/gardeno-design-logo-hyper-local-salad-vegetable-delivery-826592</a>
-
+    <h2>Get notified when we launch!</h2>
+    <div class="form-container">
+        {% if success %}
+            <h3>Thanks for signing up! You will be notified when we launch.</h3>
+        {% else %}
+            {% if error %}
+                <h4 class="error">Something went wrong</h4>
+            {% endif %}
+            <form method="post" action="/notify">
+                {% csrf_token %}
+                <input type="email" name="email" required placeholder="Enter your email address"/>
+                <button type="submit">Get Notified</button>
+            </form>
+        {% endif %}
+    </div>
 {% endblock %}

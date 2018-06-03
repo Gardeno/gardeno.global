@@ -62,3 +62,8 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+
+
+class LaunchSignup(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    email = models.EmailField(null=True)

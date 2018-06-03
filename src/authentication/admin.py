@@ -5,6 +5,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.contrib.auth.models import Group
 
 from authentication.models import User
+from .models import LaunchSignup
 
 
 class UserCreationForm(forms.ModelForm):
@@ -79,8 +80,14 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
 
 
+class LaunchSignupAdmin(admin.ModelAdmin):
+    list_display = ['id', 'date_created', 'email']
+    readonly_fields = ['date_created']
+
+
 # Now register the new UserAdmin...
 admin.site.register(User, UserAdmin)
 # ... and, since we're not using Django's built-in permissions,
 # unregister the Group model from admin.
 admin.site.unregister(Group)
+admin.site.register(LaunchSignup, LaunchSignupAdmin)
