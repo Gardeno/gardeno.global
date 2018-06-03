@@ -4,9 +4,18 @@
 
 {% block head_additional %}
     <style>
+
         .form-container {
-            width: 25%;
+            width: 50%;
             margin: 0 auto;
+        }
+
+        /* Larger than mobile screen */
+        @media (min-width: 40.0rem) {
+            .form-container {
+                width: 25%;
+                margin: 0 auto;
+            }
         }
 
         .form-container h4.error {
