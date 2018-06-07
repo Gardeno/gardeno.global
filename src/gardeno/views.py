@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from authentication.models import LaunchSignup
+from accounts.models import LaunchSignup
 
 
 def index(request):
