@@ -56,3 +56,16 @@ docker volume ls
 docker volume rm VOLUME_WEB_ID
 docker volume rm VOLUME_DB_ID
 ```
+
+# Running in production
+
+```
+docker-compose -f docker-compose.yml -f production.yml up -d
+```
+
+To deploy, use the following:
+
+```
+docker-compose build web
+docker-compose up --no-deps -d web
+```
