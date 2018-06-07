@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-    'authentication',
+    'accounts',
     'grows',
 ]
 
@@ -128,7 +128,7 @@ STATICFILES_DIRS = [
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 STATIC_ROOT = os.path.join(BASE_DIR, "src/static")
 
-AUTH_USER_MODEL = 'authentication.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
