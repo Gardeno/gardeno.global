@@ -44,3 +44,15 @@ Light Green
 
 Dark Green
 #2c3c44
+
+
+# To recreate containers / volumes
+
+```
+docker container ls
+docker container rm CONTAINER_WEB_ID
+docker container rm CONTAINER_DB_ID
+docker volume ls
+docker volume rm VOLUME_WEB_ID
+docker volume rm VOLUME_DB_ID
+```

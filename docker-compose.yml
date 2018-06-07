@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: ./config/dockerfiles/postgres/Dockerfile
+    ports:
+      - "5432:5432"
   web:
     build:
       context: .

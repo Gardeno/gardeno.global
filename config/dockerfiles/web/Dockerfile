@@ -2,7 +2,7 @@ FROM library/python:3.6.4-jessie
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y binutils libproj-dev gdal-bin
+RUN apt-get update && apt-get install -y binutils libproj-dev gdal-bin postgresql-client
 RUN pip3 install --upgrade pip
 
 ENV PYTHONUNBUFFERED 1
