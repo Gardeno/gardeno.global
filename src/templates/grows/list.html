@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block head_additional %}
+{% endblock %}
+
+{% block content %}
+    {% if not grows %}
+        <h2>No grows have been created!</h2>
+        <a href="/grows/create/">Create the first grow</a>
+    {% else %}
+
+    {% endif %}
+{% endblock %}
