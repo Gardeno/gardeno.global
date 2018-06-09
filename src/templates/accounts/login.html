@@ -3,8 +3,21 @@
 {% load static %}
 
 {% block head_additional %}
+    {% include "static_helpers/form.html" %}
 {% endblock %}
 
 {% block content %}
-
+    <h2>Login to Gardeno</h2>
+    <div class="form-container">
+        {% if error %}
+            <h4 class="error">{{ error }}</h4>
+        {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" value="{{ next_url }}" />
+            <input type="email" name="email" required placeholder="Enter your email address"/>
+            <input type="password" name="password" required placeholder="Enter your password"/>
+            <button type="submit">Login to Gardeno</button>
+        </form>
+    </div>
 {% endblock %}

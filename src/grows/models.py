@@ -22,6 +22,10 @@ class Grow(BaseModel):
     grow.save()
     '''
     location = models.PointField(null=True)
+    is_live = models.BooleanField(default=True,
+                                  help_text="A live grow has consistent setup and testing procedures,"
+                                            "reliable sensor data, regular harvesting and maintenance, etc."
+                                            "A non-live grow is for testing, R&D, or some other sort of grow.")
 
     def __str__(self):
         return self.title
@@ -56,6 +60,10 @@ class Rack(BaseModel):
     '''
     position_z = models.IntegerField(default=0, help_text='The vertical position of the grow in stories. Default is 0'
                                                           'for ground or first-floor racks.')
+
+    alphabetical_nickname = models.CharField(max_length=255, null=True,
+                                             help_text="A memorable nickname for the rack, for quick reference"
+                                                       " while inside a grow. Reference Six Sigma lab procedures.")
 
     def __str__(self):
         return '{}'.format(self.grow.title if self.grow else 'No Grow')

@@ -98,6 +98,11 @@
             float: right;
         }
 
+        header ul li {
+            float: left;
+            margin-left: 20px;
+        }
+
         header li a {
             line-height: 100px;
         }
@@ -123,6 +128,18 @@
         <li>
             <a href="/grows">Grows</a>
         </li>
+        {% if user.is_authenticated %}
+            <li>
+                <a href="/accounts/logout/">Logout</a>
+            </li>
+        {% else %}
+            <li>
+                <a href="/accounts/signup/">Signup</a>
+            </li>
+            <li>
+                <a href="/accounts/login/">Login</a>
+            </li>
+        {% endif %}
     </ul>
 </header>
 
