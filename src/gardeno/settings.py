@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'accounts',
     'grows',
+    'safety',
 ]
 
 MIDDLEWARE = [
