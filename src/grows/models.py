@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.gis.db import models
 from gardeno.models import BaseModel
+from accounts.models import User
 
 
 class Grow(BaseModel):
@@ -21,11 +22,19 @@ class Grow(BaseModel):
     grow.location = Point(-104.813959, 39.752304)
     grow.save()
     '''
-    location = models.PointField(null=True)
+    location = models.PointField(null=True, blank=True)
     is_live = models.BooleanField(default=True,
                                   help_text="A live grow has consistent setup and testing procedures,"
                                             "reliable sensor data, regular harvesting and maintenance, etc."
                                             "A non-live grow is for testing, R&D, or some other sort of grow.")
+
+    date_published = models.DateTimeField(null=True, blank=True)
+    visibility = models.CharField(max_length=255, choices=(
+        ('Private', 'Private'),
+        ('Unlisted', 'Unlisted'),
+        ('Public', 'Public'),
+    ), default='Public')
+    created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title

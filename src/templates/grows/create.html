@@ -3,8 +3,37 @@
 {% load static %}
 
 {% block head_additional %}
+    {% include "static_helpers/form.html" %}
+    <style>
+        form div.break {
+            margin: 15px 0;
+            border-bottom: 1px solid #9b4dcb;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-
+    <h2>Create a Grow</h2>
+    <div class="form-container">
+        {% if error %}
+            <h4 class="error">{{ error }}</h4>
+        {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
+            <label>
+                {{ form.title }}
+            </label>
+            <label>
+                Live grow?
+                {{ form.is_live }}
+            </label>
+            <small>
+                A live grow has consistent setup and testing procedures,
+                reliable sensor data, regular harvesting and maintenance, etc.
+                A non-live grow is for testing, R&D, etc.
+            </small>
+            <div class="break"></div>
+            <button type="submit">Continue</button>
+        </form>
+    </div>
 {% endblock %}
