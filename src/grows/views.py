@@ -4,10 +4,28 @@ from .forms import GrowForm
 from .models import Grow
 import uuid
 from django.http import HttpResponseRedirect, Http404
+from .decorators import lookup_grow
 
 
 def grows_list(request):
-    return render(request, 'grows/list.html')
+    is_mine = request.user.is_authenticated
+    if 'type' in request.GET:
+        requested_type = request.GET.get('type', 'community')
+        if requested_type in ['mine', 'community']:
+            if requested_type == 'mine':
+                if not request.user.is_authenticated:
+                    return HttpResponseRedirect('/accounts/login/?next=/grows/create/')
+                is_mine = True
+            else:
+                is_mine = False
+    if is_mine:
+        grows = Grow.objects.filter(created_by_user=request.user)
+    else:
+        grows = Grow.objects.filter(date_published__isnull=False, visibility='Public')
+    return render(request, 'grows/list.html', {
+        "is_mine": is_mine,
+        "grows": grows,
+    })
 
 
 @login_required
@@ -19,7 +37,8 @@ def grows_create(request):
         if form.is_valid():
             grow = Grow.objects.create(identifier=uuid.uuid4(),
                                        title=form.data['title'],
-                                       is_live=form.data['is_live'] == 'on')
+                                       is_live=form.data['is_live'] == 'on',
+                                       created_by_user=request.user)
             return HttpResponseRedirect("/grows/{}/".format(grow.identifier))
         else:
             error = 'Form is invalid'
@@ -29,20 +48,14 @@ def grows_create(request):
     })
 
 
-def grows_detail(request, grow_id=None):
-    try:
-        grow = Grow.objects.get(identifier=grow_id)
-    except Exception as exception:
-        raise Http404
-    owned_by_user = grow.created_by_user and request.user.id == grow.created_by_user.id
-    if not owned_by_user:
-        if not grow.date_published or grow.visibility == 'Private':
-            raise Http404
-        else:
-            return render(request, 'grows/detail/view.html', {
-                "grow": grow,
-            })
-    else:
-        return render(request, 'grows/detail/edit.html', {
-            "grow": grow,
-        })
+@lookup_grow
+def grows_detail(request):
+    template = 'grows/detail/edit.html' if request.grow.is_owned_by_user(request.user) else 'grows/detail/view.html'
+    return render(request, template, {
+        "grow": request.grow,
+    })
+
+
+@lookup_grow
+def grows_detail_update(request):
+    return HttpResponseRedirect('../')

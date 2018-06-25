@@ -36,6 +36,9 @@ class Grow(BaseModel):
     ), default='Public')
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
 
+    def is_owned_by_user(self, user):
+        return self.created_by_user and user.id == self.created_by_user.id
+
     def __str__(self):
         return self.title
 

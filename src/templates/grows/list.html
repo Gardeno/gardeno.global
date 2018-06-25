@@ -3,13 +3,75 @@
 {% load static %}
 
 {% block head_additional %}
+    {% include "static_helpers/form.html" %}
+    {% include "static_helpers/navigation-pills.html" %}
+
+    <style>
+        .navigation-container {
+            width: 100%;
+            height: 40px;
+            line-height: 40px;
+        }
+
+        ul.grow-list {
+            margin-top: 30px;
+        }
+
+        ul.grow-list li {
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-    {% if not grows %}
-        <h2>No grows have been created!</h2>
-        <a href="/grows/create/">Create the first grow</a>
-    {% else %}
-
-    {% endif %}
+    <div class="form-container">
+        {% if user.is_authenticated %}
+            <div class="navigation-container">
+                <ul class="navigation-pills">
+                    <li{% if is_mine %} class="active"{% endif %}>
+                        <a href="?type=mine">My Grows</a>
+                    </li>
+                    <li{% if not is_mine %} class="active"{% endif %}>
+                        <a href="?type=community">Community Grows</a>
+                    </li>
+                </ul>
+            </div>
+        {% endif %}
+        {% if not grows %}
+            <h2>
+                {% if is_mine %}
+                    You have not created any grows!
+                {% else %}
+                    No grows have been created!
+                {% endif %}
+            </h2>
+            <a href="/grows/create/">Create {% if is_mine %}your{% else %}the{% endif %} first grow</a>
+        {% else %}
+            <ul class="grow-list">
+                {% for grow in grows %}
+                    <li>
+                        <div>
+                            <div>
+                                <h4>
+                                    <a href="{{ grow.identifier }}/">
+                                        {{ grow }}
+                                    </a>
+                                </h4>
+                            </div>
+                            <div>
+                                <span>{{ grow.visibility }}</span>
+                                <span>&bull;</span>
+                                <span>
+                                {% if grow.date_published %}
+                                    Published
+                                {% else %}
+                                    Not Published
+                                {% endif %}
+                            </span>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 {% endblock %}
