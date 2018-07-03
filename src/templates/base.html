@@ -30,8 +30,6 @@
         gtag('config', '{{ google_analytics_id }}');
     </script>
 
-    <link href="{% static "css/milligram.min.css" %}" rel="stylesheet">
-
     <style>
         body, html {
             margin: 0;
@@ -146,6 +144,8 @@
 <div class="content">
     {% block content %}{% endblock %}
 </div>
+
+<link href="{% static "css/milligram.min.css" %}" rel="stylesheet">
 
 {% block foot_additional %}{% endblock %}
 
