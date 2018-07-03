@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import requests
 from dotenv import load_dotenv
 
 from pathlib import Path  # python3 only
+
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -141,7 +143,15 @@ AUTH_USER_MODEL = 'accounts.User'
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
+    '[::1]',
     'gardeno.global',
-    '172.30.1.161',
-    '34.227.47.75',
 ]
+
+EC2_PRIVATE_IP = None
+try:
+    EC2_PRIVATE_IP = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=0.01).text
+except requests.exceptions.RequestException:
+    pass
+
+if EC2_PRIVATE_IP:
+    ALLOWED_HOSTS.append(EC2_PRIVATE_IP)

@@ -48,15 +48,16 @@ Dark Green
 docker system prune -a
 ```
 
-# Running in production
+# To deploy
+
+Copy `.env.example` to `deployment/DESIRED_ENVIRONMENT/.env`
+
+Run `./deploy.sh`
+
+# Running locally against a development database
+
+After running `./deploy.sh` once (to tag the web image appropriately) run this:
 
 ```
-docker-compose -f docker-compose.yml -f production.yml up -d
-```
-
-To deploy, use the following:
-
-```
-docker-compose build web
-docker-compose up --no-deps -d web
+docker run -it -p 8001:80 gardeno.global
 ```

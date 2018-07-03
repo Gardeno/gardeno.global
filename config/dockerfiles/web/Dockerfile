@@ -13,3 +13,5 @@ RUN pip3 install -r requirements.txt
 ADD ./src /code/
 
 ENV GDAL_LIBRARY_PATH /usr/lib/ogdi/libgdal.so
+
+CMD python3 manage.py runserver 0.0.0.0:80

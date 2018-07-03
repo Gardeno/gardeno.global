@@ -2,6 +2,11 @@
 
 . ./.aws_creds
 
+# TODO: Move the following to an environment variable somewhere, someday
+
+TASK_MEMORY=1024
+TASK_CPU=512
+
 docker build -f config/dockerfiles/web/Dockerfile -t gardeno.global-base .
 
 $(aws ecr get-login --no-include-email --region us-west-2)
@@ -16,6 +21,6 @@ docker push $ECS_REPOSITORY_URL:$VERSION
 
 CONTAINER_DEFINITIONS=$(cat ./deployment/dev/container_definitions.json | jq -c --arg VERSION "$VERSION" --arg ECS_REPOSITORY_URL "$ECS_REPOSITORY_URL" '.[0].image = $ECS_REPOSITORY_URL + ":" + $VERSION')
 
-TASK_DEFINITION_FAMILY_AND_REVISION=$(aws ecs register-task-definition --family $ECS_TASK_DEFINITION_NAME --network-mode "awsvpc" --execution-role-arn $ECS_EXECUTION_ROLE_ARN --memory 512 --cpu 256 --task-role-arn $ECS_TASK_ROLE_ARN --requires-compatibilities "FARGATE" --container-definitions $CONTAINER_DEFINITIONS | jq -cr ".taskDefinition.taskDefinitionArn")
+TASK_DEFINITION_FAMILY_AND_REVISION=$(aws ecs register-task-definition --family $ECS_TASK_DEFINITION_NAME --network-mode "awsvpc" --execution-role-arn $ECS_EXECUTION_ROLE_ARN --memory $TASK_MEMORY --cpu $TASK_CPU --task-role-arn $ECS_TASK_ROLE_ARN --requires-compatibilities "FARGATE" --container-definitions $CONTAINER_DEFINITIONS | jq -cr ".taskDefinition.taskDefinitionArn")
 
 aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --task-definition $TASK_DEFINITION_FAMILY_AND_REVISION
