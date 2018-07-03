@@ -12,17 +12,13 @@ docker-compose up
 # To apply migrations
 
 ```
-docker-compose run web migrate
+docker-compose run web python3 manage.py migrate
 ```
 
 # Some important commands
 
 ```
-python manage.py collectstatic --noinput
-```
-
-```
-python manage.py migrate
+docker-compose run web python3 manage.py collectstatic --noinput
 ```
 
 # Colors
