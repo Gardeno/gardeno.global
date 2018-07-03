@@ -4,3 +4,4 @@
 /config/ngrok.yml
 /src/gardeno/settings_env.py
 **/.DS_Store
+/.aws_creds

@@ -11,10 +11,10 @@ services:
     build:
       context: .
       dockerfile: ./config/dockerfiles/web/Dockerfile
-    command: python3 manage.py runserver 0.0.0.0:8000
+    command: python3 manage.py runserver 0.0.0.0:80
     volumes:
       - ./src:/code
     ports:
-      - "8001:8000"
+      - "8001:80"
     depends_on:
       - db

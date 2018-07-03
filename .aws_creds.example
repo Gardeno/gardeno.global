@@ -1,0 +1,8 @@
+export AWS_ACCESS_KEY_ID="KEY"
+export AWS_SECRET_ACCESS_KEY="SECRET"
+
+export ECS_CLUSTER_NAME="development"
+export ECS_SERVICE_NAME="development"
+export ECS_REPOSITORY_URL="ACCOUNT_ID.dkr.ecr.region.amazonaws.com/gardeno.global"
+export ECS_TASK_DEFINITION_NAME="TASK_DEFINITION_NAME"
+export ECS_EXECUTION_ROLE_ARN="EXECUTION_ROLE_ARN"

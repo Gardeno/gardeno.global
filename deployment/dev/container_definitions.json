@@ -1,0 +1,28 @@
+[
+  {
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/dev-web",
+        "awslogs-region": "us-west-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "portMappings": [
+      {
+        "hostPort": 80,
+        "protocol": "tcp",
+        "containerPort": 80
+      }
+    ],
+    "cpu": 0,
+    "environment": [],
+    "mountPoints": [],
+    "memory": 500,
+    "memoryReservation": 300,
+    "volumesFrom": [],
+    "image": "URL_THAT_WILL_BE_REPLACED:TAG_THAT_WILL_BE_REPLACED",
+    "essential": true,
+    "name": "dev-web"
+  }
+]
