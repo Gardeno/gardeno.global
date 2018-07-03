@@ -11,9 +11,9 @@ services:
     build:
       context: .
       dockerfile: ./config/dockerfiles/web/Dockerfile
-    command: python3 manage.py runserver 0.0.0.0:80
     volumes:
       - ./src:/code
+      - ./fixtures:/fixtures
     ports:
       - "8001:80"
     depends_on:
