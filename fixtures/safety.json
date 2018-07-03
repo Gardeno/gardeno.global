@@ -1,0 +1,26 @@
+[
+  {
+    "model": "safety.hazardidentification",
+    "pk": 1,
+    "fields": {
+      "date_created": "2018-06-09T04:12:56.860Z",
+      "date_modified": "2018-06-09T04:12:56.860Z",
+      "date_archived": "2018-06-09T03:12:07Z",
+      "location": "SRID=4326;POINT (-97.80785678454517 30.23598942480463)",
+      "description": "Chris took a can tab off of the can and left it on the ground in Chris and Sarah's backyard.\r\n\r\nCan tabs are a choking hazard for dogs and Loki would have been in danger if the tab was on the ground.",
+      "user": 1
+    }
+  },
+  {
+    "model": "safety.incident",
+    "pk": 1,
+    "fields": {
+      "date_created": "2018-06-13T01:55:48.075Z",
+      "date_modified": "2018-06-13T01:55:48.075Z",
+      "date_archived": "2018-06-12T18:00:00Z",
+      "location": "SRID=4326;POINT (-104.8750591132099 39.75202790029159)",
+      "description": "Chris wore improper PPE (specifically, eye protection) and as a result has a scratch or dust in his eye causing severe irritation.",
+      "user": 1
+    }
+  }
+]

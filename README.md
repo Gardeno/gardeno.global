@@ -61,3 +61,15 @@ After running `./deploy.sh` once (to tag the web image appropriately) run this:
 ```
 docker run -it -p 8001:80 gardeno.global
 ```
+
+To install fixtures against a development database
+
+```
+docker run -it -v $PWD/fixtures:/code/fixtures -p 8001:80 gardeno.global python3 manage.py loaddata fixtures/users.json
+```
+
+To install database migrations against a development database
+
+```
+docker run -it gardeno.global python3 manage.py migrate
+```

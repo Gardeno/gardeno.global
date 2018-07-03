@@ -140,11 +140,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, "src/static")
 
 AUTH_USER_MODEL = 'accounts.User'
 
+SECURE_SSL_REDIRECT = False
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '[::1]',
     'gardeno.global',
+    # Delete the following soon:
+    'dualstack.development-834511150.us-west-2.elb.amazonaws.com',
 ]
 
 EC2_PRIVATE_IP = None
@@ -155,3 +159,5 @@ except requests.exceptions.RequestException:
 
 if EC2_PRIVATE_IP:
     ALLOWED_HOSTS.append(EC2_PRIVATE_IP)
+    SECURE_SSL_REDIRECT = True
+
