@@ -158,8 +158,6 @@ RAVEN_CONFIG = {
     'release': '0.0.1'
 }
 
-DEBUG = False
-
 '''
 EC2_PRIVATE_IP = None
 try:
