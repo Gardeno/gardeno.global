@@ -21,7 +21,14 @@ docker-compose run web python3 manage.py loaddata /fixtures/safety.json
 
 ```
 docker-compose run web python3 manage.py collectstatic --noinput
+```
 
+# To install new dependencies
+
+```
+docker exec -it gardenoglobal_web_1 pip3 install raven
+docker exec -it gardenoglobal_web_1 pip3 freeze > src/requirements.txt
+docker-compose build
 ```
 
 # To recreate containers / volumes

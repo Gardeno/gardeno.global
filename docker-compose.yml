@@ -11,6 +11,7 @@ services:
     build:
       context: .
       dockerfile: ./config/dockerfiles/web/Dockerfile
+    command: /usr/bin/supervisord
     volumes:
       - ./src:/code
       - ./fixtures:/fixtures

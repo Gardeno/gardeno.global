@@ -19,6 +19,7 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 import os
+import raven
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +31,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'mc52j)#z-o1q&6s$kf)88e50wdkfn@ds4#0j7m^j-r6)-oyxft'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('ENVIRONMENT') == 'local'
+print(DEBUG)
 
 # Application definition
 
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'raven.contrib.django.raven_compat',
     'accounts',
     'grows',
     'safety',
@@ -62,8 +65,7 @@ ROOT_URLCONF = 'gardeno.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -136,7 +138,7 @@ STATICFILES_DIRS = [
 ]
 
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
-STATIC_ROOT = os.path.join(BASE_DIR, "src/static")
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -145,7 +147,18 @@ ALLOWED_HOSTS = [
     'localhost',
     '[::1]',
     'gardeno.global',
+    '*',
 ]
+
+RAVEN_CONFIG = {
+    'dsn': os.getenv('RAVEN_DSN'),
+    # If you are using git, you can also automatically configure the
+    # release based on the git info.
+    # 'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
+    'release': '0.0.1'
+}
+
+DEBUG = False
 
 '''
 EC2_PRIVATE_IP = None
