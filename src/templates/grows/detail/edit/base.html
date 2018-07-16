@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load humanize %}
+
+{% block head_additional %}
+    {% include "static_helpers/navigation-pills.html" %}
+    <style>
+        .content {
+            padding-top: 0
+        }
+
+        div.grow-header {
+            width: 100%;
+            height: 50px;
+            padding: 0 50px 65px;
+            border-bottom: 1px solid #ceb3de;
+        }
+
+        div.grow-header h4 {
+            line-height: 50px;
+            float: left;
+            font-size: 30px;
+        }
+
+        div.grow-header span.published-info {
+            float: left;
+            line-height: 50px;
+            margin-left: 12px;
+            font-size: 12px
+        }
+
+        div.grow-header form {
+            float: right;
+            margin: 0;
+            padding-top: 6px;
+        }
+
+        div.grow-header form select {
+            margin: 0;
+            width: 140px;
+        }
+
+        div.grow-header form button {
+            margin: 0;
+        }
+
+        div.subcontent {
+            padding: 15px 50px;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="grow-header">
+        <h4>
+            <a href="/grows/{{ grow.identifier }}/">{{ grow.title }}</a>
+        </h4>
+        {% if grow.date_published %}
+            <span class="published-info">Published {{ grow.date_published|naturaltime }} </span>
+        {% endif %}
+        <form method="post" action="/grows/{{ grow.identifier }}/update/">
+            {% csrf_token %}
+            <select name="visibility">
+                {% for visibility_option in grow_visibility_options %}
+                    <option value="{{ visibility_option }}"{% ifequal grow.visibility visibility_option %}
+                            selected{% endifequal %}>{{ visibility_option }}</option>
+                {% endfor %}
+                </option>
+            </select>
+            <button name="save" type="submit">
+                Save Changes
+            </button>
+            {% if not grow.date_published %}
+                <button name="publish" type="submit">
+                    Publish
+                </button>
+            {% endif %}
+        </form>
+    </div>
+    <div class="subcontent">
+        <div class="navigation-container">
+            <ul class="navigation-pills">
+                <li{% if not active_view %} class="active"{% endif %}>
+                    <a href="/grows/{{ grow.identifier }}/">Dashboard</a>
+                </li>
+                <li{% ifequal active_view "sensors" %} class="active"{% endifequal %}>
+                    <a href="/grows/{{ grow.identifier }}/sensors/">Sensors</a>
+                </li>
+            </ul>
+        </div>
+        {% block subcontent %}{% endblock %}
+    </div>
+{% endblock %}

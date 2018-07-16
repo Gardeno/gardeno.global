@@ -3,6 +3,27 @@ from django.contrib.gis.db import models
 from gardeno.models import BaseModel
 from accounts.models import User
 
+VISIBILITY_OPTIONS = [
+    {
+        'value': 'Public',
+    },
+    {
+        'value': 'Private',
+    },
+    {
+        'value': 'Unlisted',
+    },
+]
+
+SENSOR_TYPES = [
+    {
+        'value': 'Ambient',
+    },
+]
+
+VISIBILITY_OPTION_VALUES = [x['value'] for x in VISIBILITY_OPTIONS]
+SENSOR_TYPE_VALUES = [x['value'] for x in SENSOR_TYPES]
+
 
 class Grow(BaseModel):
     """
@@ -29,11 +50,9 @@ class Grow(BaseModel):
                                             "A non-live grow is for testing, R&D, or some other sort of grow.")
 
     date_published = models.DateTimeField(null=True, blank=True)
-    visibility = models.CharField(max_length=255, choices=(
-        ('Private', 'Private'),
-        ('Unlisted', 'Unlisted'),
-        ('Public', 'Public'),
-    ), default='Public')
+    visibility = models.CharField(max_length=255,
+                                  choices=[(x, x) for x in VISIBILITY_OPTION_VALUES],
+                                  default='Public')
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
 
     def is_owned_by_user(self, user):
@@ -109,3 +128,8 @@ class TrayPosition(BaseModel):
     rack = models.ForeignKey(Rack, null=True, on_delete=models.CASCADE)
     position_x = models.IntegerField(default=0)
     position_y = models.IntegerField(default=0)
+
+
+class Sensor(BaseModel):
+    grow = models.ForeignKey(Grow, null=True, on_delete=models.CASCADE)
+    type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])

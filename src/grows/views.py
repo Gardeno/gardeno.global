@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import GrowForm
-from .models import Grow
+from .models import Grow, VISIBILITY_OPTION_VALUES
 import uuid
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from .decorators import lookup_grow
+from datetime import datetime
 
 
 def grows_list(request):
@@ -50,12 +51,39 @@ def grows_create(request):
 
 @lookup_grow
 def grows_detail(request):
-    template = 'grows/detail/edit.html' if request.grow.is_owned_by_user(request.user) else 'grows/detail/view.html'
+    template = 'grows/detail/edit/dashboard.html' if request.grow.is_owned_by_user(
+        request.user) else 'grows/detail/view/dashboard.html'
     return render(request, template, {
         "grow": request.grow,
     })
 
 
 @lookup_grow
+def grows_detail_sensors(request):
+    template = 'grows/detail/edit/sensors/index.html' if request.grow.is_owned_by_user(
+        request.user) else 'grows/detail/view/sensors/index.html'
+    return render(request, template, {
+        "grow": request.grow,
+        "active_view": "sensors",
+    })
+
+
+@lookup_grow
 def grows_detail_update(request):
+    if not request.POST:
+        return HttpResponseRedirect('../')
+    visibility = request.POST.get('visibility', None)
+    if visibility not in VISIBILITY_OPTION_VALUES:
+        return HttpResponseBadRequest('Visibility must be one of {}'.format(', '.join(VISIBILITY_OPTION_VALUES)))
+    request.grow.visibility = visibility
+    if 'publish' in request.POST:
+        if request.grow.date_published:
+            return HttpResponseBadRequest('Grow has already been published!')
+        else:
+            request.grow.date_published = datetime.utcnow()
+            request.grow.save()
+    elif 'save' in request.POST:
+        request.grow.save()
+    else:
+        return HttpResponseBadRequest('Can only publish or save')
     return HttpResponseRedirect('../')
