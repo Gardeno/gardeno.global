@@ -20,6 +20,7 @@ load_dotenv(dotenv_path=env_path)
 
 import os
 import raven
+import boto3
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,7 +33,6 @@ SECRET_KEY = 'mc52j)#z-o1q&6s$kf)88e50wdkfn@ds4#0j7m^j-r6)-oyxft'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('ENVIRONMENT') == 'local'
-print(DEBUG)
 
 # Application definition
 
@@ -45,11 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django.contrib.humanize',
-    'raven.contrib.django.raven_compat',
     'accounts',
     'grows',
     'safety',
 ]
+
+if not DEBUG:
+    INSTALLED_APPS += 'raven.contrib.django.raven_compat',
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -159,6 +161,8 @@ RAVEN_CONFIG = {
     # 'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
     'release': '0.0.1'
 }
+
+IOT_CLIENT = boto3.client('iot')
 
 '''
 EC2_PRIVATE_IP = None

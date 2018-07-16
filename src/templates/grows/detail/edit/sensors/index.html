@@ -1,5 +1,58 @@
 {% extends "grows/detail/edit/base.html" %}
 
+{% block subhead_additional %}
+
+    <style>
+
+        div.pick-sensor-type {
+            width: 500px;
+            margin: 0 auto;
+        }
+
+        div.pick-sensor-type ul li {
+            height: 150px;
+            width: 150px;
+            border-radius: 8px;
+            border: 1px solid #9b4dca;
+            color: #9b4dca;
+            position: relative;
+            display: inline-block;
+            margin: 0 5px;
+        }
+
+        div.pick-sensor-type ul li a {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            padding-top: 40px;
+        }
+
+    </style>
+
+{% endblock %}
+
+
 {% block subcontent %}
-    <h1>Sensors</h1>
+    {% if not grow.sensors.count %}
+        <h2>No sensors have been added to this grow!</h2>
+        <h3>Add a new sensor:</h3>
+        <div class="pick-sensor-type">
+            <ul>
+                {% for available_sensor_type in available_sensor_types %}
+                    <li>
+                        <a href="/grows/{{ grow.identifier }}/sensors/create/?type={{ available_sensor_type.value }}">
+                            <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon><br />
+                            {{ available_sensor_type.value }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        {% for sensor in grow.sensors.all %}
+            <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a>
+        {% endfor %}
+    {% endif %}
 {% endblock %}

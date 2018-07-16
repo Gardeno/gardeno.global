@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm
-from .models import Grow, VISIBILITY_OPTION_VALUES
+from .forms import GrowForm, GrowSensorForm
+from .models import Grow, Sensor, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
-from .decorators import lookup_grow
+from .decorators import lookup_grow, must_own_grow, lookup_sensor
 from datetime import datetime
+from django.conf import settings
 
 
 def grows_list(request):
@@ -59,11 +60,69 @@ def grows_detail(request):
 
 
 @lookup_grow
+@must_own_grow
 def grows_detail_sensors(request):
     template = 'grows/detail/edit/sensors/index.html' if request.grow.is_owned_by_user(
         request.user) else 'grows/detail/view/sensors/index.html'
     return render(request, template, {
         "grow": request.grow,
+        "active_view": "sensors",
+        "available_sensor_types": SENSOR_TYPES
+    })
+
+
+@lookup_grow
+@must_own_grow
+def grows_detail_sensors_create(request):
+    initial_type = request.GET.get('type', 'Ambient')
+    error = None
+    form = GrowSensorForm(initial={
+        'type': initial_type,
+    })
+    if request.POST:
+        form = GrowSensorForm(request.POST)
+        if form.is_valid():
+            sensor_type = form.data['type']
+            sensor = Sensor.objects.create(grow=request.grow,
+                                           identifier=uuid.uuid4(),
+                                           created_by_user=request.user,
+                                           type=sensor_type)
+            response = settings.IOT_CLIENT.create_thing(
+                thingName='{}__{}'.format(request.grow.identifier, sensor.identifier),
+                thingTypeName=SENSOR_AWS_TYPE_LOOKUP[sensor_type],
+                attributePayload={
+                    'attributes': {
+                        'grow_id': '{}'.format(request.grow.identifier),
+                        'sensor_id': '{}'.format(sensor.identifier),
+                    }
+                }
+            )
+            sensor.aws_thing_name = response['thingName']
+            sensor.aws_thing_arn = response['thingArn']
+            sensor.aws_thing_id = response['thingId']
+            sensor.save()
+            return HttpResponseRedirect("/grows/{}/sensors/{}/".format(request.grow.identifier, sensor.identifier))
+        else:
+            error = 'Form is invalid'
+    return render(request, 'grows/detail/edit/sensors/create.html', {
+        "grow": request.grow,
+        "form": form,
+        "error": error,
+        "active_view": "sensors",
+        "available_sensor_types": SENSOR_TYPES,
+        "initial_type": initial_type,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+def grows_detail_sensors_detail(request):
+    template = 'grows/detail/edit/sensors/detail.html' if request.grow.is_owned_by_user(
+        request.user) else 'grows/detail/view/sensors/detail.html'
+    return render(request, template, {
+        "grow": request.grow,
+        "sensor": request.sensor,
         "active_view": "sensors",
     })
 
@@ -71,7 +130,7 @@ def grows_detail_sensors(request):
 @lookup_grow
 def grows_detail_update(request):
     if not request.POST:
-        return HttpResponseRedirect('../')
+        return HttpResponseRedirect('/grows/{}'.format(request.grow.identifier))
     visibility = request.POST.get('visibility', None)
     if visibility not in VISIBILITY_OPTION_VALUES:
         return HttpResponseBadRequest('Visibility must be one of {}'.format(', '.join(VISIBILITY_OPTION_VALUES)))
@@ -86,4 +145,4 @@ def grows_detail_update(request):
         request.grow.save()
     else:
         return HttpResponseBadRequest('Can only publish or save')
-    return HttpResponseRedirect('../')
+    return HttpResponseRedirect('/grows/{}'.format(request.grow.identifier))

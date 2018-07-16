@@ -1,6 +1,6 @@
 from django.forms import models
-from .models import Grow
-from django.forms.widgets import TextInput, CheckboxInput
+from .models import Grow, Sensor
+from django.forms.widgets import TextInput, CheckboxInput, Select
 
 
 class GrowForm(models.ModelForm):
@@ -15,4 +15,15 @@ class GrowForm(models.ModelForm):
                 "placeholder": "Enter grow title...",
             }),
             "is_live": CheckboxInput(),
+        }
+
+
+class GrowSensorForm(models.ModelForm):
+    class Meta:
+        model = Sensor
+        fields = ['type']
+        widgets = {
+            "type": Select(attrs={
+                "required": True
+            }),
         }

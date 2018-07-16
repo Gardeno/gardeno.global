@@ -18,11 +18,45 @@ VISIBILITY_OPTIONS = [
 SENSOR_TYPES = [
     {
         'value': 'Ambient',
+        'ionicon_name': 'thermometer',
+        'help_text': 'Measures ambient temperature, humidity, pressure, etc for the grow.',
+        'aws_thing_type_name': 'Ambient_Indoor_Grow_Sensor',
+    },
+    {
+        'value': 'Outdoor',
+        'ionicon_name': 'rainy',
+        'help_text': 'Measures outdoor conditions',
+        'aws_thing_type_name': 'Outdoor_Grow_Sensor',
+    },
+    {
+        'value': 'Camera',
+        'ionicon_name': 'camera',
+        'help_text': 'Takes pictures of the grow or components of the grow',
+        'aws_thing_type_name': 'Camera_Sensor',
+    },
+    {
+        'value': 'CO2',
+        'ionicon_name': 'globe',
+        'help_text': 'Measures CO2 levels',
+        'aws_thing_type_name': 'CO2_Sensor',
+    },
+    {
+        'value': 'pH / EOC',
+        'ionicon_name': 'flask',
+        'help_text': 'Measures and logs water quality and content',
+        'aws_thing_type_name': 'Water_Quality_Sensor',
+    },
+    {
+        'value': 'Air Quality',
+        'ionicon_name': 'nuclear',
+        'help_text': 'Keeps track of the air quality',
+        'aws_thing_type_name': 'Air_Quality_Sensor',
     },
 ]
 
 VISIBILITY_OPTION_VALUES = [x['value'] for x in VISIBILITY_OPTIONS]
 SENSOR_TYPE_VALUES = [x['value'] for x in SENSOR_TYPES]
+SENSOR_AWS_TYPE_LOOKUP = dict((x['value'], x['aws_thing_type_name']) for x in SENSOR_TYPES)
 
 
 class Grow(BaseModel):
@@ -131,5 +165,11 @@ class TrayPosition(BaseModel):
 
 
 class Sensor(BaseModel):
-    grow = models.ForeignKey(Grow, null=True, on_delete=models.CASCADE)
+    grow = models.ForeignKey(Grow, null=True, related_name='sensors', on_delete=models.CASCADE)
+    identifier = models.UUIDField(null=True)
+    created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
+    # AWS specific values
+    aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
+    aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
+    aws_thing_id = models.CharField(max_length=255, null=True, blank=True)
