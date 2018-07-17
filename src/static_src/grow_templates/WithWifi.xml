@@ -5,8 +5,8 @@
       <block type="wifisetup" id=".M`:K7*bBv31;(kz)#|u">
         <field name="1">NETWORK_NAME</field>
         <field name="2">NETWORK_PASSWORD</field>
-        <field name="3">WPA/WPA2</field>
-        <field name="4">ISO_3166_COUNTRY</field>
+        <field name="3">NETWORK_TYPE</field>
+        <field name="4">NETWORK_ISO_3166_COUNTRY</field>
         <next>
           <block type="changepass" id="0.EkAe;`OzQe(kU)AFm|">
             <field name="1">USER_PASSWORD</field>

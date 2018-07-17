@@ -1,6 +1,6 @@
 authtoken: AUTH_TOKEN
 tunnels:
-  global_growth_token:
-    addr: 8000
+  gardeno:
+    addr: 8001
     proto: http
-    subdomain: global_growth_token
+    subdomain: gardeno

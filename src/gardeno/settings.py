@@ -162,11 +162,12 @@ RAVEN_CONFIG = {
     # 'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
     'release': '0.0.1'
 }
-
 GREENGRASS_CLIENT = boto3.client('greengrass')
 GREENGRASS_CORE_TYPE_NAME = 'Greengrass_Core'
 
 IOT_CLIENT = boto3.client('iot')
+
+SITE_URL = os.getenv('SITE_URL')
 
 '''
 EC2_PRIVATE_IP = None

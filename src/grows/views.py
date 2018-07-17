@@ -3,10 +3,15 @@ from django.contrib.auth.decorators import login_required
 from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
 from .models import Grow, Sensor, GrowSensorPreferences, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
-from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core
 from datetime import datetime
 from django.conf import settings
+import os
+import secrets
+import string
+
+alphabet = string.ascii_letters + string.digits
 
 
 def grows_list(request):
@@ -131,6 +136,46 @@ def grows_detail_sensors_core(request):
         return HttpResponseRedirect('{}?error'.format(grow_url))
     else:
         return HttpResponseRedirect(grow_url)
+
+
+@lookup_grow
+@must_own_grow
+def grows_detail_sensors_core_recipe(request):
+    with open(os.path.join(settings.STATIC_ROOT, 'grow_templates', 'WithWifi.xml')) as xml_file:
+        read_xml_file = ''.join(xml_file.readlines())
+        read_xml_file = read_xml_file.replace('SENSOR_HOSTNAME',
+                                              'core-{}'.format(request.grow.aws_greengrass_core.core_id))
+        read_xml_file = read_xml_file.replace('DOWNLOAD_FILE_URL',
+                                              '{}/grows/{}/sensors/setup/?auth_token=foobar'.format(settings.SITE_URL,
+                                                                                                    request.grow.identifier))
+        generated_user_password = None
+        if hasattr(request.grow, 'preferences'):
+            read_xml_file = read_xml_file.replace('NETWORK_NAME', request.grow.preferences.wifi_network_name)
+            read_xml_file = read_xml_file.replace('NETWORK_PASSWORD', request.grow.preferences.wifi_password)
+            read_xml_file = read_xml_file.replace('NETWORK_TYPE', request.grow.preferences.wifi_type)
+            read_xml_file = read_xml_file.replace('NETWORK_ISO_3166_COUNTRY',
+                                                  request.grow.preferences.wifi_country_code.code)
+            read_xml_file = read_xml_file.replace('PUBLIC_SSH_KEY',
+                                                  request.grow.preferences.publish_ssh_key_for_authentication)
+            if request.grow.preferences.sensor_user_password:
+                generated_user_password = request.grow.preferences.sensor_user_password
+        if not generated_user_password:
+            generated_user_password = ''.join(
+                secrets.choice(alphabet) for _ in range(10))  # for a 20-character password
+        read_xml_file = read_xml_file.replace('USER_PASSWORD', generated_user_password)
+        response = HttpResponse(read_xml_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename={}-core.xml'.format(request.grow)
+        return response
+
+
+@lookup_grow
+@must_own_grow
+def grows_detail_sensors_core_setup(request):
+    with open(os.path.join(settings.STATIC_ROOT, 'grow_templates', 'setup_greengrass.sh')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(request.grow)
+        return response
 
 
 @lookup_grow

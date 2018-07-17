@@ -7,6 +7,7 @@
 ```
 docker-compose build
 docker-compose up
+ngrok start --config config/ngrok.yml gardeno
 ```
 
 # To apply migrations (locally)
