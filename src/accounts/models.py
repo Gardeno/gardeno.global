@@ -39,6 +39,7 @@ class User(AbstractBaseUser):
     )
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    grow_limit = models.IntegerField(default=10, null=True, help_text='Maximum number of grows this user can create.')
 
     objects = UserManager()
 

@@ -4,7 +4,7 @@ from .forms import GrowForm, GrowSensorForm
 from .models import Grow, Sensor, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
-from .decorators import lookup_grow, must_own_grow, lookup_sensor
+from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core
 from datetime import datetime
 from django.conf import settings
 
@@ -37,10 +37,13 @@ def grows_create(request):
     if request.POST:
         form = GrowForm(request.POST)
         if form.is_valid():
+            if request.user.created_grows.filter(date_archived__isnull=True).count() >= request.user.grow_limit:
+                return HttpResponseRedirect("/grows/exceeded/")
             grow = Grow.objects.create(identifier=uuid.uuid4(),
                                        title=form.data['title'],
                                        is_live=form.data['is_live'] == 'on',
                                        created_by_user=request.user)
+            grow.create_greengrass_group()
             return HttpResponseRedirect("/grows/{}/".format(grow.identifier))
         else:
             error = 'Form is invalid'
@@ -48,6 +51,11 @@ def grows_create(request):
         "form": form,
         "error": error,
     })
+
+
+@login_required
+def grows_exceeded(request):
+    return render(request, 'grows/exceeded.html', {})
 
 
 @lookup_grow
@@ -61,6 +69,25 @@ def grows_detail(request):
 
 @lookup_grow
 @must_own_grow
+def grows_detail_group(request):
+    if request.grow.has_created_greengrass_group:
+        return HttpResponseRedirect('/grows/{}/'.format(request.grow.identifier))
+    error = None
+    if request.POST:
+        success = request.grow.create_greengrass_group()
+        if success:
+            return HttpResponseRedirect('/grows/{}/'.format(request.grow.identifier))
+        else:
+            error = "Unable to create group at this time. Please try again later."
+    return render(request, 'grows/detail/edit/group.html', {
+        "grow": request.grow,
+        "error": error
+    })
+
+
+@lookup_grow
+@must_own_grow
+@must_have_created_core
 def grows_detail_sensors(request):
     template = 'grows/detail/edit/sensors/index.html' if request.grow.is_owned_by_user(
         request.user) else 'grows/detail/view/sensors/index.html'
@@ -73,6 +100,25 @@ def grows_detail_sensors(request):
 
 @lookup_grow
 @must_own_grow
+def grows_detail_sensors_core(request):
+    if request.grow.has_created_greengrass_core:
+        return HttpResponseRedirect('/grows/{}/sensors/'.format(request.grow.identifier))
+    error = None
+    if request.POST:
+        if not request.grow.create_greengrass_core():
+            error = 'Unable to create core. Please try again later.'
+        else:
+            return HttpResponseRedirect('/grows/{}/sensors/'.format(request.grow.identifier))
+    return render(request, 'grows/detail/edit/sensors/core.html', {
+        "grow": request.grow,
+        "active_view": "sensors",
+        "error": error,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@must_have_created_core
 def grows_detail_sensors_create(request):
     initial_type = request.GET.get('type', 'Ambient')
     error = None
@@ -117,6 +163,7 @@ def grows_detail_sensors_create(request):
 @lookup_grow
 @must_own_grow
 @lookup_sensor
+@must_have_created_core
 def grows_detail_sensors_detail(request):
     template = 'grows/detail/edit/sensors/detail.html' if request.grow.is_owned_by_user(
         request.user) else 'grows/detail/view/sensors/detail.html'

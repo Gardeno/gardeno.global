@@ -65,36 +65,40 @@
         {% if grow.date_published %}
             <span class="published-info">Published {{ grow.date_published|naturaltime }} </span>
         {% endif %}
-        <form method="post" action="/grows/{{ grow.identifier }}/update/">
-            {% csrf_token %}
-            <select name="visibility">
-                {% for visibility_option in grow_visibility_options %}
-                    <option value="{{ visibility_option }}"{% ifequal grow.visibility visibility_option %}
-                            selected{% endifequal %}>{{ visibility_option }}</option>
-                {% endfor %}
-                </option>
-            </select>
-            <button name="save" type="submit">
-                Save Changes
-            </button>
-            {% if not grow.date_published %}
-                <button name="publish" type="submit">
-                    Publish
+        {% if grow.has_created_greengrass_group %}
+            <form method="post" action="/grows/{{ grow.identifier }}/update/">
+                {% csrf_token %}
+                <select name="visibility">
+                    {% for visibility_option in grow_visibility_options %}
+                        <option value="{{ visibility_option }}"{% ifequal grow.visibility visibility_option %}
+                                selected{% endifequal %}>{{ visibility_option }}</option>
+                    {% endfor %}
+                    </option>
+                </select>
+                <button name="save" type="submit">
+                    Save Changes
                 </button>
-            {% endif %}
-        </form>
+                {% if not grow.date_published %}
+                    <button name="publish" type="submit">
+                        Publish
+                    </button>
+                {% endif %}
+            </form>
+        {% endif %}
     </div>
     <div class="subcontent">
-        <div class="navigation-container">
-            <ul class="navigation-pills">
-                <li{% if not active_view %} class="active"{% endif %}>
-                    <a href="/grows/{{ grow.identifier }}/">Dashboard</a>
-                </li>
-                <li{% ifequal active_view "sensors" %} class="active"{% endifequal %}>
-                    <a href="/grows/{{ grow.identifier }}/sensors/">Sensors</a>
-                </li>
-            </ul>
-        </div>
+        {% block navigation %}
+            <div class="navigation-container">
+                <ul class="navigation-pills">
+                    <li{% if not active_view %} class="active"{% endif %}>
+                        <a href="/grows/{{ grow.identifier }}/">Dashboard</a>
+                    </li>
+                    <li{% ifequal active_view "sensors" %} class="active"{% endifequal %}>
+                        <a href="/grows/{{ grow.identifier }}/sensors/">Sensors</a>
+                    </li>
+                </ul>
+            </div>
+        {% endblock %}
         {% block subcontent %}{% endblock %}
     </div>
 {% endblock %}

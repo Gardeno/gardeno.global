@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.gis.db import models
 from gardeno.models import BaseModel
 from accounts.models import User
+from django.conf import settings
+import logging
+import json
+from .greengrass_policy import GREENGRASS_POLICY
 
 VISIBILITY_OPTIONS = [
     {
@@ -87,7 +91,178 @@ class Grow(BaseModel):
     visibility = models.CharField(max_length=255,
                                   choices=[(x, x) for x in VISIBILITY_OPTION_VALUES],
                                   default='Public')
-    created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='created_grows')
+
+    # AWS Greengrass configuration
+
+    greengrass_group_arn = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_group_id = models.CharField(max_length=255, null=True, blank=True)
+
+    greengrass_core_thing_name = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_thing_arn = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_thing_id = models.CharField(max_length=255, null=True, blank=True)
+
+    greengrass_core_certificate_arn = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_certificate_id = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_certificate_pem = models.TextField(null=True, blank=True)
+    greengrass_core_certificate_keypair_public = models.TextField(null=True, blank=True)
+    greengrass_core_certificate_keypair_private = models.TextField(null=True, blank=True)
+
+    greengrass_core_policy_name = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_policy_arn = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_policy_document = models.TextField(null=True, blank=True)
+    greengrass_core_policy_version_id = models.CharField(max_length=255, null=True, blank=True)
+
+    greengrass_core_arn = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_id = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_latest_version = models.CharField(max_length=255, null=True, blank=True)
+    greengrass_core_latest_version_arn = models.CharField(max_length=255, null=True, blank=True)
+
+    def create_greengrass_group(self):
+        try:
+            greengrass_group_response = settings.GREENGRASS_CLIENT.create_group(Name='{}'.format(self.identifier))
+            self.greengrass_group_arn = greengrass_group_response['Arn']
+            self.greengrass_group_id = greengrass_group_response['Id']
+            self.save()
+            return True
+        except Exception as exception:
+            logging.error(exception)
+            return False
+
+    def create_greengrass_core(self):
+        try:
+            core_name = '{}_Core'.format(self.identifier)
+            try:
+                # We first create a thing
+                greengrass_core_thing_response = settings.IOT_CLIENT.create_thing(
+                    thingName=core_name,
+                    thingTypeName=settings.GREENGRASS_CORE_TYPE_NAME,
+                    attributePayload={
+                        'attributes': {
+                            'grow_id': '{}'.format(self.identifier),
+                        }
+                    }
+                )
+                self.greengrass_core_thing_name = greengrass_core_thing_response['thingName']
+                self.greengrass_core_thing_arn = greengrass_core_thing_response['thingArn']
+                self.greengrass_core_thing_id = greengrass_core_thing_response['thingId']
+            except Exception as exception:
+                logging.error('Unable to create the Thing')
+                logging.error(exception)
+                return False
+            try:
+                # See if the policy already exists
+                existing_policy = settings.IOT_CLIENT.get_policy(
+                    policyName=core_name
+                )
+                self.greengrass_core_policy_name = existing_policy['policyName']
+                self.greengrass_core_policy_arn = existing_policy['policyArn']
+                self.greengrass_core_policy_document = existing_policy['policyDocument']
+                self.greengrass_core_policy_version_id = existing_policy['defaultVersionId']
+            except:
+                try:
+                    # We then create a policy since one does not exist
+                    greengrass_core_policy_response = settings.IOT_CLIENT.create_policy(
+                        policyName=core_name,
+                        policyDocument=json.dumps(GREENGRASS_POLICY)
+                    )
+                    self.greengrass_core_policy_name = greengrass_core_policy_response['policyName']
+                    self.greengrass_core_policy_arn = greengrass_core_policy_response['policyArn']
+                    self.greengrass_core_policy_document = greengrass_core_policy_response['policyDocument']
+                    self.greengrass_core_policy_version_id = greengrass_core_policy_response['policyVersionId']
+                except Exception as exception:
+                    logging.error('Unable to create the policy')
+                    logging.error(exception)
+                    return False
+            try:
+                # We then create a certificate
+                greengrass_core_thing_certificate_response = settings.IOT_CLIENT.create_keys_and_certificate(
+                    setAsActive=True
+                )
+                self.greengrass_core_certificate_arn = greengrass_core_thing_certificate_response['certificateArn']
+                self.greengrass_core_certificate_id = greengrass_core_thing_certificate_response['certificateId']
+                self.greengrass_core_certificate_pem = greengrass_core_thing_certificate_response['certificatePem']
+                self.greengrass_core_certificate_keypair_public = greengrass_core_thing_certificate_response['keyPair'][
+                    'PublicKey']
+                self.greengrass_core_certificate_keypair_private = \
+                    greengrass_core_thing_certificate_response['keyPair']['PrivateKey']
+            except Exception as exception:
+                logging.error('Unable to create the certificate')
+                logging.error(exception)
+                return False
+            try:
+                # We then attach the certificate to the policy
+                settings.IOT_CLIENT.attach_policy(policyName=self.greengrass_core_policy_name,
+                                                  target=self.greengrass_core_certificate_arn)
+            except Exception as exception:
+                logging.error('Unable to attach the certificate to the policy')
+                logging.error(exception)
+                return False
+            try:
+                # We then attach the thing to the certificate
+                settings.IOT_CLIENT.attach_thing_principal(thingName=self.greengrass_core_thing_name,
+                                                           principal=self.greengrass_core_certificate_arn)
+            except Exception as exception:
+                logging.error('Unable to attach the Thing to the certificate')
+                logging.error(exception)
+                return False
+            try:
+                response = settings.GREENGRASS_CLIENT.create_core_definition(
+                    InitialVersion={
+                        'Cores': [
+                            {
+                                'CertificateArn': self.greengrass_core_certificate_arn,
+                                'Id': '{}'.format(self.identifier),
+                                'SyncShadow': True,
+                                'ThingArn': self.greengrass_core_thing_arn
+                            },
+                        ]
+                    },
+                    Name=core_name,
+                )
+                self.greengrass_core_arn = response['Arn']
+                self.greengrass_core_id = response['Id']
+                self.greengrass_core_latest_version = response['LatestVersion']
+                self.greengrass_core_latest_version_arn = response['LatestVersionArn']
+            except Exception as exception:
+                logging.error('Unable to create the core definition')
+                logging.error(exception)
+                return False
+            try:
+                group_version_response = settings.GREENGRASS_CLIENT.create_group_version(
+                    GroupId=self.greengrass_group_id,
+                    CoreDefinitionVersionArn=self.greengrass_core_latest_version_arn,
+                )
+                print('Group version response')
+                print(group_version_response)
+            except Exception as exception:
+                logging.error('Unable to create the core definition')
+                logging.error(exception)
+                return False
+            self.save()
+            return True
+        except Exception as exception:
+            logging.error('Unable to create the core')
+            logging.error(exception)
+            return False
+
+    @property
+    def has_created_greengrass_group(self):
+        return self.greengrass_group_arn and self.greengrass_group_id
+
+    @property
+    def has_created_greengrass_core(self):
+        # May return differently if we've created the thing or certificate but not the full core, so stubbed out
+        # the conditionals appropriately.
+        if not self.greengrass_core_thing_name or not self.greengrass_core_thing_arn or not self.greengrass_core_thing_id:
+            return False
+        if not self.greengrass_core_certificate_arn or not self.greengrass_core_certificate_id or not self.greengrass_core_certificate_pem or not self.greengrass_core_certificate_keypair_public or not self.greengrass_core_certificate_keypair_private:
+            return False
+        if not self.greengrass_core_policy_name or not self.greengrass_core_policy_arn or not self.greengrass_core_policy_document or not self.greengrass_core_policy_version_id:
+            return False
+        if not self.greengrass_core_arn or not self.greengrass_core_id or not self.greengrass_core_latest_version or not self.greengrass_core_latest_version_arn:
+            return False
+        return True
 
     def is_owned_by_user(self, user):
         return self.created_by_user and user.id == self.created_by_user.id

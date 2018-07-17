@@ -162,6 +162,9 @@ RAVEN_CONFIG = {
     'release': '0.0.1'
 }
 
+GREENGRASS_CLIENT = boto3.client('greengrass')
+GREENGRASS_CORE_TYPE_NAME = 'Greengrass_Core'
+
 IOT_CLIENT = boto3.client('iot')
 
 '''

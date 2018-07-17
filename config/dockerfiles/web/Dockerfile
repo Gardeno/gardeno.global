@@ -2,7 +2,7 @@ FROM library/python:3.6.4-jessie
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y binutils libproj-dev gdal-bin postgresql-client supervisor nginx
+RUN apt-get update && apt-get install -y binutils libproj-dev gdal-bin postgresql-client supervisor nginx vim
 RUN pip3 install --upgrade pip
 
 RUN pip3 install uwsgi

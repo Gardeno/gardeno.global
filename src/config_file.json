@@ -1,0 +1,54 @@
+{
+  "core": {
+    "cert_arn": "",
+    "cert_id": "",
+    "thing_arn": "",
+    "thing_name": ""
+  },
+  "core_def": {
+    "id": "",
+    "version_arn": ""
+  },
+  "device_def": {
+    "id": "",
+    "version_arn": ""
+  },
+  "devices": {
+    "device_thing_name": {
+      "cert_arn": "",
+      "cert_id": "",
+      "thing_arn": "",
+      "thing_name": ""
+    }
+  },
+  "func_def": {
+    "id": "",
+    "version_arn": ""
+  },
+  "group": {
+    "id": "7124a206-f7c3-4896-8f92-2cf9e3d42cc0"
+  },
+  "lambda_functions": {
+    "MockDevice": {
+      "arn": "arn:aws:lambda:us-west-2:<account_id>:function:MockDevice:<alias>",
+      "arn_qualifier": "<alias>"
+    }
+  },
+  "logger_def": {
+    "id": "",
+    "version_arn": ""
+  },
+  "misc": {
+    "account_id": "",
+    "iot_endpoint": "a1d9m4my55yy04.iot.us-west-2.amazonaws.com",
+    "policy_name": "ggc-default-policy"
+  },
+  "subscription_def": {
+    "id": "",
+    "version_arn": ""
+  },
+  "subscriptions": {
+    "errors": "/errors",
+    "telemetry": "/telemetry"
+  }
+}

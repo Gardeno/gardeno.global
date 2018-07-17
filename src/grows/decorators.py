@@ -10,8 +10,14 @@ def lookup_grow(function):
         except Exception as exception:
             raise Http404
         request.grow = grow
-        if not request.grow.is_owned_by_user(request.user) and (
-                    not grow.date_published or grow.visibility == 'Private'):
+        if request.grow.is_owned_by_user(request.user):
+            # If we've never created the Greengrass group (likely an error)
+            # we force a redirect. The system does not function without one.
+            if not request.grow.has_created_greengrass_group:
+                create_group_url = '/grows/{}/group/'.format(request.grow.identifier)
+                if request.get_full_path() != create_group_url:
+                    return HttpResponseRedirect(create_group_url)
+        elif not grow.date_published or grow.visibility == 'Private':
             raise Http404
         return function(request, *args, **kwargs)
 
@@ -41,6 +47,18 @@ def lookup_sensor(function):
         except Exception as exception:
             raise Http404
         request.sensor = sensor
+        return function(request, *args, **kwargs)
+
+    wrap.__doc__ = function.__doc__
+    wrap.__name__ = function.__name__
+
+    return wrap
+
+
+def must_have_created_core(function):
+    def wrap(request, *args, **kwargs):
+        if not request.grow.has_created_greengrass_core:
+            return HttpResponseRedirect("/grows/{}/sensors/core/".format(request.grow.identifier))
         return function(request, *args, **kwargs)
 
     wrap.__doc__ = function.__doc__

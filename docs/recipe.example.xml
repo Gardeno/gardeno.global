@@ -1,0 +1,87 @@
+<xml 
+  xmlns="http://www.w3.org/1999/xhtml">
+  <block type="onfirstboot" id=":Hrs40v{PBa+P)_/N`B1" x="30" y="7">
+    <next>
+      <block type="wifisetup" id=".M`:K7*bBv31;(kz)#|u">
+        <field name="1">Gardeno Foundation</field>
+        <field name="2">wemakesalads</field>
+        <field name="3">WPA/WPA2</field>
+        <field name="4">US</field>
+        <next>
+          <block type="changepass" id="0.EkAe;`OzQe(kU)AFm|">
+            <field name="1">^A9M3jVNS6.</field>
+            <next>
+              <block type="sethostname" id="BG#tY6,QTHdvKBe2Ie6{">
+                <field name="1">cohoat-grow-ambient-sensor-2</field>
+                <next>
+                  <block type="authorizekey" id="n_FP/mdktr+:UzD?2ZTb">
+                    <field name="1">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDge642irp1QkDVzaM5Ka4npRTJAbW8LpXgK1z6dBCBJyrRo0lTqC4OdNyWgHxgailnvYaXkpv2v7fTotNfG+rRVyOFwWoGc2Kq3R1jm9GgM9+E6INe6HbGxURRobrMvkrQGs00VfKOLlZ9/naYkJArAow7jY618nFQPkkm19t61bYQ64LdbcfOe5gJ2jd4uZQxGBoqDw2EEZEX16aoamTecw16V0PYbn7I9306P7g4VuZ+zKVCUB67F41L4IzjtxFo+r/6o0QizuCYoy6MqdAujQkPbI0cRFCW75bSzhkdZEtmNkEXDu8iZ3ekkBTBn24m2RqPj1NF0fVNoYyD6Ac5 chris@Chriss-MacBook-Pro.local</field>
+                    <field name="2">pi</field>
+                    <next>
+                      <block type="runcommand" id="rebx%u+d6#N-nm6Fx}KS">
+                        <field name="1">systemctl enable ssh</field>
+                        <field name="2">root</field>
+                        <next>
+                          <block type="runcommand" id=".riJdNn_2!NU[T,zh~),">
+                            <field name="1">systemctl start ssh</field>
+                            <field name="2">root</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="onboot" id="]wAJhfSECR.Tc_x,ye34" x="562" y="5">
+    <next>
+      <block type="downloadfile" id="U]=z],7@hYi3Uo_!DGkC">
+        <field name="1">https://raw.githubusercontent.com/Gardeno/gardeno.global/master/scripts/setup_greengrass.sh</field>
+        <field name="2">/home/pi/setup_greengrass.sh</field>
+        <next>
+          <block type="runcommand" id="t;q=0v|@t-*2-)5K)DL=">
+            <field name="1">chmod +x /home/pi/setup_greengrass.sh</field>
+            <field name="2">root</field>
+            <next>
+              <block type="runcommand" id="p=VQm}gxrwLVSU5Yq2QJ">
+                <field name="1">/home/pi/setup_greengrass.sh</field>
+                <field name="2">root</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="runcommand" id="LI|1hEYf(W3LkW]V}kCR" x="50" y="400">
+    <field name="1">adduser --system ggc_user</field>
+    <field name="2">root</field>
+    <next>
+      <block type="runcommand" id="o(#-yiIRZlwCTXbUau6!">
+        <field name="1">addgroup --system ggc_group</field>
+        <field name="2">root</field>
+        <next>
+          <block type="runcommand" id="sr%Hn}TBpRk`,B{RD0X!">
+            <field name="1">apt-get update</field>
+            <field name="2">root</field>
+            <next>
+              <block type="runcommand" id="r3oXK_[*kX~/e?C*pEd:">
+                <field name="1">rpi-update HERE</field>
+                <field name="2">root</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+  <block type="reboot" id=",v+SU#-)2Y+]i6wK8pOe" x="24" y="630"></block>
+  <firstboot 
+    xmlns="">0
+  </firstboot>
+</xml>
