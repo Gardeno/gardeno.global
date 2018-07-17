@@ -13,7 +13,7 @@ urlpatterns = [
     path('<grow_id>/sensors/preferences/', grows_detail_sensors_preferences),
     path('<grow_id>/sensors/core/', grows_detail_sensors_core),
     path('<grow_id>/sensors/core/recipe/', grows_detail_sensors_core_recipe),
-    path('<grow_id>/sensors/core/setup/', grows_detail_sensors_core_setup),
+    path('<grow_id>/sensors/core/setup/<setup_id>/', grows_detail_sensors_core_setup),
     path('<grow_id>/sensors/create/', grows_detail_sensors_create),
     path('<grow_id>/sensors/<sensor_id>/', grows_detail_sensors_detail),
     path('<grow_id>/update/', grows_detail_update),

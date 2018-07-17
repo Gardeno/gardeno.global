@@ -286,6 +286,13 @@ class AWSGreengrassCore(models.Model):
     latest_version_arn = models.CharField(max_length=255, null=True, blank=True)
 
 
+class AWSGreengrassCoreSetupToken(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    aws_greengrass_core = models.ForeignKey(AWSGreengrassCore, related_name='setup_tokens', on_delete=models.CASCADE)
+    identifier = models.UUIDField()
+    date_last_downloaded = models.DateTimeField(null=True, blank=True)
+
+
 class Rack(BaseModel):
     """
     A rack is used for small, homegrown vertical farming systems.

@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
-from .models import Grow, Sensor, GrowSensorPreferences, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
+from .models import Grow, Sensor, GrowSensorPreferences, AWSGreengrassCoreSetupToken, VISIBILITY_OPTION_VALUES, \
+    SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core
-from datetime import datetime
+from datetime import datetime, timezone
 from django.conf import settings
 import os
 import secrets
@@ -141,13 +142,19 @@ def grows_detail_sensors_core(request):
 @lookup_grow
 @must_own_grow
 def grows_detail_sensors_core_recipe(request):
+    if not hasattr(request.grow, 'aws_greengrass_core'):
+        return HttpResponseBadRequest('Need to create a core before generating the recipe.')
+    aws_greengrass_core = request.grow.aws_greengrass_core
+    setup_token = AWSGreengrassCoreSetupToken.objects.create(aws_greengrass_core=aws_greengrass_core,
+                                                             identifier=uuid.uuid4())
     with open(os.path.join(settings.STATIC_ROOT, 'grow_templates', 'WithWifi.xml')) as xml_file:
         read_xml_file = ''.join(xml_file.readlines())
         read_xml_file = read_xml_file.replace('SENSOR_HOSTNAME',
-                                              'core-{}'.format(request.grow.aws_greengrass_core.core_id))
+                                              'core-{}'.format(aws_greengrass_core.core_id))
         read_xml_file = read_xml_file.replace('DOWNLOAD_FILE_URL',
-                                              '{}/grows/{}/sensors/setup/?auth_token=foobar'.format(settings.SITE_URL,
-                                                                                                    request.grow.identifier))
+                                              '{}/grows/{}/sensors/core/setup/{}/'.format(settings.SITE_URL,
+                                                                                          request.grow.identifier,
+                                                                                          setup_token.identifier))
         generated_user_password = None
         if hasattr(request.grow, 'preferences'):
             read_xml_file = read_xml_file.replace('NETWORK_NAME', request.grow.preferences.wifi_network_name)
@@ -168,13 +175,25 @@ def grows_detail_sensors_core_recipe(request):
         return response
 
 
-@lookup_grow
-@must_own_grow
-def grows_detail_sensors_core_setup(request):
+def grows_detail_sensors_core_setup(request, grow_id=None, setup_id=None):
+    # No authentication decorators because the setup_id is an expiring token
+    try:
+        grow = Grow.objects.get(identifier=grow_id)
+    except:
+        raise Http404
+    try:
+        setup_token = AWSGreengrassCoreSetupToken.objects.get(aws_greengrass_core__grow=grow,
+                                                              identifier=setup_id)
+    except:
+        raise Http404
+    if (datetime.now(timezone.utc) - setup_token.date_created).total_seconds() > 60 * 60 * 24:
+        return HttpResponseBadRequest('Setup script has expired')
     with open(os.path.join(settings.STATIC_ROOT, 'grow_templates', 'setup_greengrass.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         response = HttpResponse(read_executable_file, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(request.grow)
+        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(grow)
+        setup_token.date_last_downloaded = datetime.now(timezone.utc)
+        setup_token.save()
         return response
 
 
