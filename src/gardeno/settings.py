@@ -169,6 +169,9 @@ IOT_CLIENT = boto3.client('iot')
 
 SITE_URL = os.getenv('SITE_URL')
 
+AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
+AWS_IOT_CUSTOM_ENDPOINT = os.getenv('AWS_IOT_CUSTOM_ENDPOINT')
+
 '''
 EC2_PRIVATE_IP = None
 try:

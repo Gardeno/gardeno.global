@@ -188,8 +188,15 @@ def grows_detail_sensors_core_setup(request, grow_id=None, setup_id=None):
         raise Http404
     if (datetime.now(timezone.utc) - setup_token.date_created).total_seconds() > 60 * 60 * 24:
         return HttpResponseBadRequest('Setup script has expired')
+    aws_greengrass_core = setup_token.aws_greengrass_core
     with open(os.path.join(settings.STATIC_ROOT, 'grow_templates', 'setup_greengrass.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
+        read_executable_file = read_executable_file.replace('[REPLACE_CERT_PEM]', aws_greengrass_core.certificate_pem)
+        read_executable_file = read_executable_file.replace('[REPLACE_PRIVATE_KEY]', aws_greengrass_core.certificate_keypair_private)
+        read_executable_file = read_executable_file.replace('[REPLACE_PUBLIC_KEY]', aws_greengrass_core.certificate_keypair_public)
+        read_executable_file = read_executable_file.replace('[THING_ARN_HERE]', aws_greengrass_core.thing_arn)
+        read_executable_file = read_executable_file.replace('[AWS_IOT_CUSTOM_ENDPOINT]', settings.AWS_IOT_CUSTOM_ENDPOINT)
+        read_executable_file = read_executable_file.replace('[AWS_REGION_HERE]', settings.AWS_DEFAULT_REGION)
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(grow)
         setup_token.date_last_downloaded = datetime.now(timezone.utc)
