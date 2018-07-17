@@ -1,0 +1,48 @@
+{% extends "grows/detail/edit/base.html" %}
+
+{% block subhead_additional %}
+    {% include "static_helpers/form.html" %}
+{% endblock %}
+
+{% block subfoot_additional %}
+{% endblock %}
+
+{% block subcontent %}
+    <h2>Sensor Preferences</h2>
+    <div class="form-container">
+        {% if error %}
+            <h4 class="error">{{ error }}</h4>
+        {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
+            <label>
+                WiFi Network Name
+                {{ form.wifi_network_name }}
+            </label>
+            <label>
+                WiFi Network Password
+                {{ form.wifi_password }}
+            </label>
+            <label>
+                WiFi Network Type
+                {{ form.wifi_type }}
+            </label>
+            <label>
+                WiFi Country
+                {{ form.wifi_country_code }}
+            </label>
+            <label>
+                SSH Public Key
+                {{ form.publish_ssh_key_for_authentication.errors }}
+                {{ form.publish_ssh_key_for_authentication }}
+            </label>
+            <label>
+                Sensor User Password
+                {{ form.sensor_user_password }}
+                <small style="font-weight: normal">(Will be auto-generated if left blank)</small>
+            </label>
+            <div class="break"></div>
+            <button type="submit">Update Preferences</button>
+        </form>
+    </div>
+{% endblock %}

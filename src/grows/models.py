@@ -6,6 +6,7 @@ from django.conf import settings
 import logging
 import json
 from .greengrass_policy import GREENGRASS_POLICY
+from django_countries.fields import CountryField
 
 VISIBILITY_OPTIONS = [
     {
@@ -93,43 +94,21 @@ class Grow(BaseModel):
                                   default='Public')
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='created_grows')
 
-    # AWS Greengrass configuration
-
-    greengrass_group_arn = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_group_id = models.CharField(max_length=255, null=True, blank=True)
-
-    greengrass_core_thing_name = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_thing_arn = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_thing_id = models.CharField(max_length=255, null=True, blank=True)
-
-    greengrass_core_certificate_arn = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_certificate_id = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_certificate_pem = models.TextField(null=True, blank=True)
-    greengrass_core_certificate_keypair_public = models.TextField(null=True, blank=True)
-    greengrass_core_certificate_keypair_private = models.TextField(null=True, blank=True)
-
-    greengrass_core_policy_name = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_policy_arn = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_policy_document = models.TextField(null=True, blank=True)
-    greengrass_core_policy_version_id = models.CharField(max_length=255, null=True, blank=True)
-
-    greengrass_core_arn = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_id = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_latest_version = models.CharField(max_length=255, null=True, blank=True)
-    greengrass_core_latest_version_arn = models.CharField(max_length=255, null=True, blank=True)
-
     def create_greengrass_group(self):
         try:
             greengrass_group_response = settings.GREENGRASS_CLIENT.create_group(Name='{}'.format(self.identifier))
-            self.greengrass_group_arn = greengrass_group_response['Arn']
-            self.greengrass_group_id = greengrass_group_response['Id']
-            self.save()
+            AWSGreengrassGroup.objects.create(grow=self, arn=greengrass_group_response['Arn'],
+                                              group_id=greengrass_group_response['Id'])
             return True
         except Exception as exception:
             logging.error(exception)
             return False
 
     def create_greengrass_core(self):
+        if not hasattr(self, 'aws_greengrass_group'):
+            logging.error('Cannot create core until the AWS Greengrass group exists.')
+            return False
+        core, _ = AWSGreengrassCore.objects.get_or_create(grow=self)
         try:
             core_name = '{}_Core'.format(self.identifier)
             try:
@@ -143,9 +122,9 @@ class Grow(BaseModel):
                         }
                     }
                 )
-                self.greengrass_core_thing_name = greengrass_core_thing_response['thingName']
-                self.greengrass_core_thing_arn = greengrass_core_thing_response['thingArn']
-                self.greengrass_core_thing_id = greengrass_core_thing_response['thingId']
+                core.thing_name = greengrass_core_thing_response['thingName']
+                core.thing_arn = greengrass_core_thing_response['thingArn']
+                core.thing_id = greengrass_core_thing_response['thingId']
             except Exception as exception:
                 logging.error('Unable to create the Thing')
                 logging.error(exception)
@@ -155,10 +134,10 @@ class Grow(BaseModel):
                 existing_policy = settings.IOT_CLIENT.get_policy(
                     policyName=core_name
                 )
-                self.greengrass_core_policy_name = existing_policy['policyName']
-                self.greengrass_core_policy_arn = existing_policy['policyArn']
-                self.greengrass_core_policy_document = existing_policy['policyDocument']
-                self.greengrass_core_policy_version_id = existing_policy['defaultVersionId']
+                core.policy_name = existing_policy['policyName']
+                core.policy_arn = existing_policy['policyArn']
+                core.policy_document = existing_policy['policyDocument']
+                core.policy_version_id = existing_policy['defaultVersionId']
             except:
                 try:
                     # We then create a policy since one does not exist
@@ -166,10 +145,10 @@ class Grow(BaseModel):
                         policyName=core_name,
                         policyDocument=json.dumps(GREENGRASS_POLICY)
                     )
-                    self.greengrass_core_policy_name = greengrass_core_policy_response['policyName']
-                    self.greengrass_core_policy_arn = greengrass_core_policy_response['policyArn']
-                    self.greengrass_core_policy_document = greengrass_core_policy_response['policyDocument']
-                    self.greengrass_core_policy_version_id = greengrass_core_policy_response['policyVersionId']
+                    core.policy_name = greengrass_core_policy_response['policyName']
+                    core.policy_arn = greengrass_core_policy_response['policyArn']
+                    core.policy_document = greengrass_core_policy_response['policyDocument']
+                    core.policy_version_id = greengrass_core_policy_response['policyVersionId']
                 except Exception as exception:
                     logging.error('Unable to create the policy')
                     logging.error(exception)
@@ -179,12 +158,12 @@ class Grow(BaseModel):
                 greengrass_core_thing_certificate_response = settings.IOT_CLIENT.create_keys_and_certificate(
                     setAsActive=True
                 )
-                self.greengrass_core_certificate_arn = greengrass_core_thing_certificate_response['certificateArn']
-                self.greengrass_core_certificate_id = greengrass_core_thing_certificate_response['certificateId']
-                self.greengrass_core_certificate_pem = greengrass_core_thing_certificate_response['certificatePem']
-                self.greengrass_core_certificate_keypair_public = greengrass_core_thing_certificate_response['keyPair'][
+                core.certificate_arn = greengrass_core_thing_certificate_response['certificateArn']
+                core.certificate_id = greengrass_core_thing_certificate_response['certificateId']
+                core.certificate_pem = greengrass_core_thing_certificate_response['certificatePem']
+                core.certificate_keypair_public = greengrass_core_thing_certificate_response['keyPair'][
                     'PublicKey']
-                self.greengrass_core_certificate_keypair_private = \
+                core.certificate_keypair_private = \
                     greengrass_core_thing_certificate_response['keyPair']['PrivateKey']
             except Exception as exception:
                 logging.error('Unable to create the certificate')
@@ -192,16 +171,16 @@ class Grow(BaseModel):
                 return False
             try:
                 # We then attach the certificate to the policy
-                settings.IOT_CLIENT.attach_policy(policyName=self.greengrass_core_policy_name,
-                                                  target=self.greengrass_core_certificate_arn)
+                settings.IOT_CLIENT.attach_policy(policyName=core.policy_name,
+                                                  target=core.certificate_arn)
             except Exception as exception:
                 logging.error('Unable to attach the certificate to the policy')
                 logging.error(exception)
                 return False
             try:
                 # We then attach the thing to the certificate
-                settings.IOT_CLIENT.attach_thing_principal(thingName=self.greengrass_core_thing_name,
-                                                           principal=self.greengrass_core_certificate_arn)
+                settings.IOT_CLIENT.attach_thing_principal(thingName=core.thing_name,
+                                                           principal=core.certificate_arn)
             except Exception as exception:
                 logging.error('Unable to attach the Thing to the certificate')
                 logging.error(exception)
@@ -211,33 +190,33 @@ class Grow(BaseModel):
                     InitialVersion={
                         'Cores': [
                             {
-                                'CertificateArn': self.greengrass_core_certificate_arn,
+                                'CertificateArn': core.certificate_arn,
                                 'Id': '{}'.format(self.identifier),
                                 'SyncShadow': True,
-                                'ThingArn': self.greengrass_core_thing_arn
+                                'ThingArn': core.thing_arn
                             },
                         ]
                     },
                     Name=core_name,
                 )
-                self.greengrass_core_arn = response['Arn']
-                self.greengrass_core_id = response['Id']
-                self.greengrass_core_latest_version = response['LatestVersion']
-                self.greengrass_core_latest_version_arn = response['LatestVersionArn']
+                core.arn = response['Arn']
+                core.core_id = response['Id']
+                core.latest_version = response['LatestVersion']
+                core.latest_version_arn = response['LatestVersionArn']
             except Exception as exception:
                 logging.error('Unable to create the core definition')
                 logging.error(exception)
                 return False
             try:
                 settings.GREENGRASS_CLIENT.create_group_version(
-                    GroupId=self.greengrass_group_id,
-                    CoreDefinitionVersionArn=self.greengrass_core_latest_version_arn,
+                    GroupId=self.aws_greengrass_group.group_id,
+                    CoreDefinitionVersionArn=core.latest_version_arn,
                 )
             except Exception as exception:
                 logging.error('Unable to create the core definition')
                 logging.error(exception)
                 return False
-            self.save()
+            core.save()
             return True
         except Exception as exception:
             logging.error('Unable to create the core')
@@ -246,19 +225,23 @@ class Grow(BaseModel):
 
     @property
     def has_created_greengrass_group(self):
-        return self.greengrass_group_arn and self.greengrass_group_id
+        if not hasattr(self, 'aws_greengrass_group'):
+            return False
+        return self.aws_greengrass_group.arn and self.aws_greengrass_group.group_id
 
     @property
     def has_created_greengrass_core(self):
         # May return differently if we've created the thing or certificate but not the full core, so stubbed out
         # the conditionals appropriately.
-        if not self.greengrass_core_thing_name or not self.greengrass_core_thing_arn or not self.greengrass_core_thing_id:
+        if not hasattr(self, 'aws_greengrass_core'):
             return False
-        if not self.greengrass_core_certificate_arn or not self.greengrass_core_certificate_id or not self.greengrass_core_certificate_pem or not self.greengrass_core_certificate_keypair_public or not self.greengrass_core_certificate_keypair_private:
+        if not self.aws_greengrass_core.thing_name or not self.aws_greengrass_core.thing_arn or not self.aws_greengrass_core.thing_id:
             return False
-        if not self.greengrass_core_policy_name or not self.greengrass_core_policy_arn or not self.greengrass_core_policy_document or not self.greengrass_core_policy_version_id:
+        if not self.aws_greengrass_core.certificate_arn or not self.aws_greengrass_core.certificate_id or not self.aws_greengrass_core.certificate_pem or not self.aws_greengrass_core.certificate_keypair_public or not self.aws_greengrass_core.certificate_keypair_private:
             return False
-        if not self.greengrass_core_arn or not self.greengrass_core_id or not self.greengrass_core_latest_version or not self.greengrass_core_latest_version_arn:
+        if not self.aws_greengrass_core.policy_name or not self.aws_greengrass_core.policy_arn or not self.aws_greengrass_core.policy_document or not self.aws_greengrass_core.policy_version_id:
+            return False
+        if not self.aws_greengrass_core.arn or not self.aws_greengrass_core.core_id or not self.aws_greengrass_core.latest_version or not self.aws_greengrass_core.latest_version_arn:
             return False
         return True
 
@@ -267,6 +250,40 @@ class Grow(BaseModel):
 
     def __str__(self):
         return self.title
+
+
+class AWSGreengrassGroup(models.Model):
+    grow = models.OneToOneField(Grow, on_delete=models.CASCADE, related_name='aws_greengrass_group')
+    arn = models.CharField(max_length=255, null=True, blank=True)
+    group_id = models.CharField(max_length=255, null=True, blank=True)
+
+
+class AWSGreengrassCore(models.Model):
+    grow = models.OneToOneField(Grow, on_delete=models.CASCADE, related_name='aws_greengrass_core')
+
+    has_been_setup = models.BooleanField(default=False)
+
+    # AWS Greengrass configuration
+
+    thing_name = models.CharField(max_length=255, null=True, blank=True)
+    thing_arn = models.CharField(max_length=255, null=True, blank=True)
+    thing_id = models.CharField(max_length=255, null=True, blank=True)
+
+    certificate_arn = models.CharField(max_length=255, null=True, blank=True)
+    certificate_id = models.CharField(max_length=255, null=True, blank=True)
+    certificate_pem = models.TextField(null=True, blank=True)
+    certificate_keypair_public = models.TextField(null=True, blank=True)
+    certificate_keypair_private = models.TextField(null=True, blank=True)
+
+    policy_name = models.CharField(max_length=255, null=True, blank=True)
+    policy_arn = models.CharField(max_length=255, null=True, blank=True)
+    policy_document = models.TextField(null=True, blank=True)
+    policy_version_id = models.CharField(max_length=255, null=True, blank=True)
+
+    arn = models.CharField(max_length=255, null=True, blank=True)
+    core_id = models.CharField(max_length=255, null=True, blank=True)
+    latest_version = models.CharField(max_length=255, null=True, blank=True)
+    latest_version_arn = models.CharField(max_length=255, null=True, blank=True)
 
 
 class Rack(BaseModel):
@@ -346,3 +363,15 @@ class Sensor(BaseModel):
     aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_id = models.CharField(max_length=255, null=True, blank=True)
+
+
+class GrowSensorPreferences(BaseModel):
+    grow = models.OneToOneField(Grow, related_name='preferences', on_delete=models.CASCADE)
+    wifi_network_name = models.CharField(max_length=255, null=True, blank=True)
+    wifi_password = models.CharField(max_length=255, null=True, blank=True)
+    wifi_type = models.CharField(max_length=10, null=True, blank=True,
+                                 choices=(('WPA/WPA2', 'WPA/WPA2'), ('WEP', 'WEP'), ('Open', 'Open (no password)')))
+    wifi_country_code = CountryField(null=True, blank=True)
+    publish_ssh_key_for_authentication = models.TextField(null=True, blank=True)
+    sensor_user_password = models.CharField(max_length=255, null=True, blank=True,
+                                            help_text='Will be auto-generated if left blank.')

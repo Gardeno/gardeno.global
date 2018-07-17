@@ -29,7 +29,7 @@ docker-compose run web python3 manage.py collectstatic --noinput
 ```
 docker exec -it gardenoglobal_web_1 pip3 install raven
 docker exec -it gardenoglobal_web_1 pip3 freeze > src/requirements.txt
-docker-compose build
+docker-compose build && docker-compose up
 ```
 
 # To recreate containers / volumes

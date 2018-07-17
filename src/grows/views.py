@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm, GrowSensorForm
-from .models import Grow, Sensor, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
+from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
+from .models import Grow, Sensor, GrowSensorPreferences, VISIBILITY_OPTION_VALUES, SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core
@@ -94,6 +94,30 @@ def grows_detail_sensors(request):
         "grow": request.grow,
         "active_view": "sensors",
         "available_sensor_types": SENSOR_TYPES
+    })
+
+
+@lookup_grow
+@must_own_grow
+def grows_detail_sensors_preferences(request):
+    error = None
+    existing_preferences, _ = GrowSensorPreferences.objects.get_or_create(grow=request.grow)
+    form = GrowSensorPreferencesForm(instance=existing_preferences)
+    if request.POST:
+        form = GrowSensorPreferencesForm(request.POST, instance=existing_preferences)
+        if form.is_valid():
+            grow_sensor_preferences_instance = form.save(commit=False)
+            grow_sensor_preferences_instance.grow = request.grow
+            grow_sensor_preferences_instance.save()
+            return HttpResponseRedirect("/grows/{}/sensors/".format(request.grow.identifier))
+        else:
+            print(form.errors)
+            error = 'Form is invalid'
+    return render(request, 'grows/detail/edit/sensors/preferences.html', {
+        "grow": request.grow,
+        "active_view": "sensors",
+        "form": form,
+        "error": error,
     })
 
 
