@@ -87,7 +87,6 @@ def grows_detail_group(request):
 
 @lookup_grow
 @must_own_grow
-@must_have_created_core
 def grows_detail_sensors(request):
     template = 'grows/detail/edit/sensors/index.html' if request.grow.is_owned_by_user(
         request.user) else 'grows/detail/view/sensors/index.html'
@@ -101,19 +100,13 @@ def grows_detail_sensors(request):
 @lookup_grow
 @must_own_grow
 def grows_detail_sensors_core(request):
-    if request.grow.has_created_greengrass_core:
-        return HttpResponseRedirect('/grows/{}/sensors/'.format(request.grow.identifier))
-    error = None
-    if request.POST:
-        if not request.grow.create_greengrass_core():
-            error = 'Unable to create core. Please try again later.'
-        else:
-            return HttpResponseRedirect('/grows/{}/sensors/'.format(request.grow.identifier))
-    return render(request, 'grows/detail/edit/sensors/core.html', {
-        "grow": request.grow,
-        "active_view": "sensors",
-        "error": error,
-    })
+    grow_url = '/grows/{}/sensors/'.format(request.grow.identifier)
+    if not request.POST or request.grow.has_created_greengrass_core:
+        return HttpResponseRedirect(grow_url)
+    if not request.grow.create_greengrass_core():
+        return HttpResponseRedirect('{}?error'.format(grow_url))
+    else:
+        return HttpResponseRedirect(grow_url)
 
 
 @lookup_grow

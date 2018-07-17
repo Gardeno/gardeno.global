@@ -58,7 +58,7 @@ def lookup_sensor(function):
 def must_have_created_core(function):
     def wrap(request, *args, **kwargs):
         if not request.grow.has_created_greengrass_core:
-            return HttpResponseRedirect("/grows/{}/sensors/core/".format(request.grow.identifier))
+            return HttpResponseRedirect("/grows/{}/sensors/".format(request.grow.identifier))
         return function(request, *args, **kwargs)
 
     wrap.__doc__ = function.__doc__

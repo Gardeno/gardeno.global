@@ -229,12 +229,10 @@ class Grow(BaseModel):
                 logging.error(exception)
                 return False
             try:
-                group_version_response = settings.GREENGRASS_CLIENT.create_group_version(
+                settings.GREENGRASS_CLIENT.create_group_version(
                     GroupId=self.greengrass_group_id,
                     CoreDefinitionVersionArn=self.greengrass_core_latest_version_arn,
                 )
-                print('Group version response')
-                print(group_version_response)
             except Exception as exception:
                 logging.error('Unable to create the core definition')
                 logging.error(exception)

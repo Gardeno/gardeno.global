@@ -20,7 +20,7 @@
             margin: 0 5px;
         }
 
-        div.pick-sensor-type ul li a {
+        div.pick-sensor-type ul li a, div.pick-sensor-type ul li span {
             position: absolute;
             left: 0;
             right: 0;
@@ -29,30 +29,55 @@
             padding-top: 40px;
         }
 
+        div.inactive {
+            opacity: 0.4;
+        }
+
     </style>
 
 {% endblock %}
 
 
 {% block subcontent %}
-    {% if not grow.sensors.count %}
-        <h2>No sensors have been added to this grow!</h2>
-        <h3>Add a new sensor:</h3>
-        <div class="pick-sensor-type">
-            <ul>
-                {% for available_sensor_type in available_sensor_types %}
-                    <li>
-                        <a href="/grows/{{ grow.identifier }}/sensors/create/?type={{ available_sensor_type.value }}">
-                            <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon><br />
-                            {{ available_sensor_type.value }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
+    <h2>Core Sensor</h2>
+    {% if not grow.has_created_greengrass_core %}
+        <h3>You need to create a core sensor before adding any other sensors.</h3>
+        <form action="core/" method="post">
+            {% csrf_token %}
+            <button type="submit">Create Core Sensor</button>
+        </form>
     {% else %}
-        {% for sensor in grow.sensors.all %}
-            <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a>
-        {% endfor %}
+
     {% endif %}
+    <div{% if not grow.has_created_greengrass_core %} class="inactive"{% endif %}>
+        <h2>Supporting Sensors</h2>
+        {% if not grow.sensors.count %}
+            <h3>None yet! Add a new sensor:</h3>
+            <div class="pick-sensor-type">
+                <ul>
+                    {% for available_sensor_type in available_sensor_types %}
+                        <li>
+                            {% if not grow.has_created_greengrass_core %}
+                                <span>
+                                    <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon>
+                                    <br/>
+                                    {{ available_sensor_type.value }}
+                                </span>
+                            {% else %}
+                                <a href="/grows/{{ grow.identifier }}/sensors/create/?type={{ available_sensor_type.value }}">
+                                    <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon>
+                                    <br/>
+                                    {{ available_sensor_type.value }}
+                                </a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            {% for sensor in grow.sensors.all %}
+                <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a>
+            {% endfor %}
+        {% endif %}
+    </div>
 {% endblock %}
