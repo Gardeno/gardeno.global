@@ -14,7 +14,7 @@ echo '[REPLACE_PUBLIC_KEY]' > /greengrass/certs/public.key
 
 echo "$(date) - Wrote certs" >> /home/pi/setup.log
 
-wget -O root.ca.pem http://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem /greengrass/certs/root.ca.pem
+wget -O /greengrass/certs/root.ca.pem http://www.symantec.com/content/en/us/enterprise/verisign/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem
 
 echo "$(date) - Downloaded root" >> /home/pi/setup.log
 
