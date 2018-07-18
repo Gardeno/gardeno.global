@@ -24,5 +24,7 @@ echo "$(date) - Wrote config" >> /home/pi/setup.log
 
 echo "-----" >> /home/pi/setup.log
 
-# /greengrass/ggc/core/greengrassd start
+/greengrass/ggc/core/greengrassd start
+
+echo -e '#!/usr/bin/env bash\n/greengrass/ggc/core/greengrassd start' > /boot/PiBakery/everyBoot.sh
 
