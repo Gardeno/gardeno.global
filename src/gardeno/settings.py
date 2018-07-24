@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.humanize',
     'django_countries',
+    'channels',
     'accounts',
     'grows',
     'safety',
@@ -172,14 +173,13 @@ SITE_URL = os.getenv('SITE_URL')
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 AWS_IOT_CUSTOM_ENDPOINT = os.getenv('AWS_IOT_CUSTOM_ENDPOINT')
 
-'''
-EC2_PRIVATE_IP = None
-try:
-    EC2_PRIVATE_IP = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=0.01).text
-except requests.exceptions.RequestException:
-    pass
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv('REDIS_HOST'), 6379)],
+        },
+    },
+}
 
-if EC2_PRIVATE_IP:
-    ALLOWED_HOSTS.append(EC2_PRIVATE_IP)
-    SECURE_SSL_REDIRECT = True
-'''
+ASGI_APPLICATION = "gardeno.routing.application"

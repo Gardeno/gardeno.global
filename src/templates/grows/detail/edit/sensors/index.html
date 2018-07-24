@@ -1,5 +1,7 @@
 {% extends "grows/detail/edit/base.html" %}
 
+{% load static %}
+
 {% block subhead_additional %}
 
     <style>
@@ -56,6 +58,43 @@
 
 {% endblock %}
 
+{% block subfoot_additional %}
+
+
+    <script src="{% static "js/vendor/reconnecting-websocket.js" %}"></script>
+    <script>
+
+        var socket = new ReconnectingWebSocket('ws://' + window.location.host + '/ws' + window.location.pathname, null, {
+            debug: true,
+            reconnectInterval: 3000
+        });
+
+        socket.onopen = function open() {
+            console.log('WebSockets connection created.');
+            //socket.send('{}')
+        };
+
+        socket.onmessage = function (event) {
+            console.log('received event');
+            var data = JSON.parse(event.data);
+            if (data.type === 'sensor_core_update') {
+                var coreStatusContainer = document.getElementById('core-status-container');
+                if (data.update === 'setup_started') {
+                    coreStatusContainer.innerHTML = '<h4>Setup has started...';
+                } else if (data.update === 'setup_finished') {
+                    coreStatusContainer.innerHTML = 'Core has been successfully setup!';
+                }
+            }
+        };
+
+        if (socket.readyState == WebSocket.OPEN) {
+            socket.onopen();
+        }
+
+    </script>
+
+{% endblock %}
+
 
 {% block subcontent %}
     <h2>Core Sensor</h2>
@@ -66,34 +105,38 @@
             <button type="submit">Create Core Sensor</button>
         </form>
     {% else %}
-        {% if not grow.aws_greengrass_core.has_been_setup %}
-            <ol class="core-instructions">
-                <li>Steps to connect your core sensor:</li>
-                <li>1.
-                    <a href="https://downloads.raspberrypi.org/raspbian/images/raspbian-2017-03-03/">
-                        Download Raspian 2017-03-02
-                    </a>
-                </li>
-                <li>2.
-                    Insert the SD card into your computer and run
-                    <a href="https://github.com/davidferguson/pibakery/releases">
-                        PiBakery 2.0
-                    </a>
-                </li>
-                <li>3.
-                    <a href="/grows/{{ grow.identifier }}/sensors/preferences/">
-                        Edit your sensor preferences (WiFi, usernames/passwords, SSH key, etc)
-                    </a>
-                </li>
-                <li>4.
-                    <a href="/grows/{{ grow.identifier }}/sensors/core/recipe/">Download your core's PiBakery recipe</a><br/>
-                    <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
-                </li>
-                <li>5. Open the recipe with PiBakery and flash your core device</li>
-            </ol>
-        {% else %}
-            <h4>Core has been successfully setup!</h4>
-        {% endif %}
+        <div id="core-status-container">
+            {% if not grow.aws_greengrass_core.has_been_setup %}
+                <ol class="core-instructions">
+                    <li>Steps to connect your core sensor:</li>
+                    <li>1.
+                        <a href="https://downloads.raspberrypi.org/raspbian/images/raspbian-2017-03-03/">
+                            Download Raspian 2017-03-02
+                        </a>
+                    </li>
+                    <li>2.
+                        Insert the SD card into your computer and run
+                        <a href="https://github.com/davidferguson/pibakery/releases">
+                            PiBakery 2.0
+                        </a>
+                    </li>
+                    <li>3.
+                        <a href="/grows/{{ grow.identifier }}/sensors/preferences/">
+                            Edit your sensor preferences (WiFi, usernames/passwords, SSH key, etc)
+                        </a>
+                    </li>
+                    <li>4.
+                        <a href="/grows/{{ grow.identifier }}/sensors/core/recipe/">Download your core's PiBakery
+                            recipe</a><br/>
+                        <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
+                    </li>
+                    <li>5. Open the recipe with PiBakery and flash your core device</li>
+                    <li>6. Boot up your device and wait on this page for updates</li>
+                </ol>
+            {% else %}
+                <h4>Core has been successfully setup!</h4>
+            {% endif %}
+        </div>
     {% endif %}
     <div{% if not grow.has_created_greengrass_core %} class="inactive"{% endif %}>
         <h2>Supporting Sensors</h2>

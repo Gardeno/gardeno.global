@@ -12,6 +12,8 @@ import os
 import secrets
 import string
 from django.views.decorators.csrf import csrf_exempt
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 alphabet = string.ascii_letters + string.digits
 
@@ -178,6 +180,11 @@ def grows_detail_sensors_core_recipe(request):
 
 @grow_aws_setup_token_is_valid
 def grows_detail_sensors_core_setup(request):
+    layer = get_channel_layer()
+    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
+        'type': 'sensor_core_update',
+        'update': 'setup_started',
+    })
     if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
         return HttpResponseBadRequest('Setup script has expired')
     aws_greengrass_core = request.setup_token.aws_greengrass_core
@@ -207,6 +214,11 @@ def grows_detail_sensors_core_setup(request):
 @csrf_exempt
 @grow_aws_setup_token_is_valid
 def grows_detail_sensors_core_setup_finished(request):
+    layer = get_channel_layer()
+    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
+        'type': 'sensor_core_update',
+        'update': 'setup_finished',
+    })
     '''
     Instead of polling AWS for every core sensor to determine if the connection was successful,
     we're POSTing with the setup script to this URL as x
