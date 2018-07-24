@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import grows_list, grows_create, grows_detail, grows_detail_sensors, grows_detail_sensors_create, \
     grows_detail_update, grows_detail_sensors_detail, grows_exceeded, grows_detail_group, grows_detail_sensors_core, \
-    grows_detail_sensors_preferences, grows_detail_sensors_core_recipe, grows_detail_sensors_core_setup
+    grows_detail_sensors_preferences, grows_detail_sensors_core_recipe, grows_detail_sensors_core_setup, \
+    grows_detail_sensors_core_setup_finished
 
 urlpatterns = [
     path('', grows_list),
@@ -14,6 +15,7 @@ urlpatterns = [
     path('<grow_id>/sensors/core/', grows_detail_sensors_core),
     path('<grow_id>/sensors/core/recipe/', grows_detail_sensors_core_recipe),
     path('<grow_id>/sensors/core/setup/<setup_id>/', grows_detail_sensors_core_setup),
+    path('<grow_id>/sensors/core/setup/<setup_id>/finished/', grows_detail_sensors_core_setup_finished),
     path('<grow_id>/sensors/create/', grows_detail_sensors_create),
     path('<grow_id>/sensors/<sensor_id>/', grows_detail_sensors_detail),
     path('<grow_id>/update/', grows_detail_update),

@@ -291,6 +291,7 @@ class AWSGreengrassCoreSetupToken(models.Model):
     aws_greengrass_core = models.ForeignKey(AWSGreengrassCore, related_name='setup_tokens', on_delete=models.CASCADE)
     identifier = models.UUIDField()
     date_last_downloaded = models.DateTimeField(null=True, blank=True)
+    date_finished = models.DateTimeField(null=True, blank=True)
 
 
 class Rack(BaseModel):

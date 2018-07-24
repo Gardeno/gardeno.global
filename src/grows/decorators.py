@@ -1,4 +1,4 @@
-from .models import Grow, Sensor
+from .models import Grow, Sensor, AWSGreengrassCoreSetupToken
 from django.http import HttpResponseRedirect, Http404
 
 
@@ -59,6 +59,28 @@ def must_have_created_core(function):
     def wrap(request, *args, **kwargs):
         if not request.grow.has_created_greengrass_core:
             return HttpResponseRedirect("/grows/{}/sensors/".format(request.grow.identifier))
+        return function(request, *args, **kwargs)
+
+    wrap.__doc__ = function.__doc__
+    wrap.__name__ = function.__name__
+
+    return wrap
+
+
+def grow_aws_setup_token_is_valid(function):
+    def wrap(request, *args, **kwargs):
+        grow_id = kwargs.pop('grow_id')
+        setup_id = kwargs.pop('setup_id')
+        try:
+            request.grow = Grow.objects.get(identifier=grow_id)
+        except:
+            raise Http404
+        try:
+            setup_token = AWSGreengrassCoreSetupToken.objects.get(aws_greengrass_core__grow=request.grow,
+                                                                  identifier=setup_id)
+        except:
+            raise Http404
+        request.setup_token = setup_token
         return function(request, *args, **kwargs)
 
     wrap.__doc__ = function.__doc__

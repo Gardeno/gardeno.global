@@ -26,5 +26,10 @@ echo "-----" >> /home/pi/setup.log
 
 /greengrass/ggc/core/greengrassd start
 
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{}' \
+  [FINISHED_SETUP_URL]
+
 echo -e '#!/usr/bin/env bash\n/greengrass/ggc/core/greengrassd start' > /boot/PiBakery/everyBoot.sh
 

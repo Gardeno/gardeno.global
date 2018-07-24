@@ -4,13 +4,14 @@ from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
 from .models import Grow, Sensor, GrowSensorPreferences, AWSGreengrassCoreSetupToken, VISIBILITY_OPTION_VALUES, \
     SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
 import uuid
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
+from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, grow_aws_setup_token_is_valid
 from datetime import datetime, timezone
 from django.conf import settings
 import os
 import secrets
 import string
+from django.views.decorators.csrf import csrf_exempt
 
 alphabet = string.ascii_letters + string.digits
 
@@ -175,20 +176,11 @@ def grows_detail_sensors_core_recipe(request):
         return response
 
 
-def grows_detail_sensors_core_setup(request, grow_id=None, setup_id=None):
-    # No authentication decorators because the setup_id is an expiring token
-    try:
-        grow = Grow.objects.get(identifier=grow_id)
-    except:
-        raise Http404
-    try:
-        setup_token = AWSGreengrassCoreSetupToken.objects.get(aws_greengrass_core__grow=grow,
-                                                              identifier=setup_id)
-    except:
-        raise Http404
-    if (datetime.now(timezone.utc) - setup_token.date_created).total_seconds() > 60 * 60 * 24:
+@grow_aws_setup_token_is_valid
+def grows_detail_sensors_core_setup(request):
+    if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
         return HttpResponseBadRequest('Setup script has expired')
-    aws_greengrass_core = setup_token.aws_greengrass_core
+    aws_greengrass_core = request.setup_token.aws_greengrass_core
     with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_greengrass.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         read_executable_file = read_executable_file.replace('[REPLACE_CERT_PEM]', aws_greengrass_core.certificate_pem)
@@ -200,11 +192,33 @@ def grows_detail_sensors_core_setup(request, grow_id=None, setup_id=None):
         read_executable_file = read_executable_file.replace('[AWS_IOT_CUSTOM_ENDPOINT]',
                                                             settings.AWS_IOT_CUSTOM_ENDPOINT)
         read_executable_file = read_executable_file.replace('[AWS_REGION_HERE]', settings.AWS_DEFAULT_REGION)
+        read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
+                                                            '{}/grows/{}/sensors/core/setup/{}/finished/'.format(
+                                                                settings.SITE_URL,
+                                                                request.grow.identifier,
+                                                                request.setup_token.identifier))
         response = HttpResponse(read_executable_file, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(grow)
-        setup_token.date_last_downloaded = datetime.now(timezone.utc)
-        setup_token.save()
+        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(request.grow)
+        request.setup_token.date_last_downloaded = datetime.now(timezone.utc)
+        request.setup_token.save()
         return response
+
+
+@csrf_exempt
+@grow_aws_setup_token_is_valid
+def grows_detail_sensors_core_setup_finished(request):
+    '''
+    Instead of polling AWS for every core sensor to determine if the connection was successful,
+    we're POSTing with the setup script to this URL as x
+    '''
+    request.setup_token.aws_greengrass_core.has_been_setup = True
+    request.setup_token.aws_greengrass_core.save()
+    request.setup_token.date_finished = datetime.now(timezone.utc)
+    request.setup_token.save()
+    if not request.POST:
+        # return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
+        pass
+    return JsonResponse({"success": True})
 
 
 @lookup_grow
