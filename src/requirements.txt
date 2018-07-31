@@ -13,7 +13,7 @@ channels==2.1.2
 channels-redis==2.2.1
 chardet==3.0.4
 constantly==15.1.0
-cryptography==2.2.2
+cryptography==2.3
 daphne==2.2.1
 Django==2.0.4
 django-countries==5.3.1

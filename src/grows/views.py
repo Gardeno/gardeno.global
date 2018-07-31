@@ -136,6 +136,10 @@ def grows_detail_sensors_core(request):
     grow_url = '/grows/{}/sensors/'.format(request.grow.identifier)
     if not request.POST or request.grow.has_created_greengrass_core:
         return HttpResponseRedirect(grow_url)
+    # TODO : Execute sudo useradd -m USERNAME on tunnel server
+    # Possibly lock port down on said server after giving user access to said port
+    # Generate public / private OpenSSH key
+    # - Store public
     if not request.grow.create_greengrass_core():
         return HttpResponseRedirect('{}?error'.format(grow_url))
     else:
@@ -188,8 +192,13 @@ def grows_detail_sensors_core_setup(request):
     if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
         return HttpResponseBadRequest('Setup script has expired')
     aws_greengrass_core = request.setup_token.aws_greengrass_core
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_greengrass.sh')) as executable_file:
+    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_greengrass_core.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
+        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_NAME]',
+                                                            aws_greengrass_core.thing_name)
+        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ARN]',
+                                                            aws_greengrass_core.thing_name)
+        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ID]', aws_greengrass_core.thing_id)
         read_executable_file = read_executable_file.replace('[REPLACE_CERT_PEM]', aws_greengrass_core.certificate_pem)
         read_executable_file = read_executable_file.replace('[REPLACE_PRIVATE_KEY]',
                                                             aws_greengrass_core.certificate_keypair_private)
