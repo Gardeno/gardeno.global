@@ -39,7 +39,17 @@ class User(AbstractBaseUser):
     )
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+
     grow_limit = models.IntegerField(default=10, null=True, help_text='Maximum number of grows this user can create.')
+
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # Sometimes we'll want to create a user as a result of another action. For example,
+    # inviting a new user to a team will create the user, add the user to the team, but we will
+    # want to allow the user to "register" for the first time.
+    sign_up_finished = models.BooleanField(default=True)
+    email_verified = models.BooleanField(default=False)
 
     objects = UserManager()
 
