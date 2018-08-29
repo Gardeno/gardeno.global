@@ -92,6 +92,8 @@ class Grow(BaseModel):
     visibility = models.CharField(max_length=255,
                                   choices=[(x, x) for x in VISIBILITY_OPTION_VALUES],
                                   default='Public')
+
+
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='created_grows')
 
     def create_greengrass_group(self):
