@@ -9,6 +9,7 @@
         div.pick-sensor-type {
             width: 500px;
             margin: 0 auto;
+            border-top: 1px solid #ceb3de;
         }
 
         div.pick-sensor-type ul li {
@@ -30,28 +31,6 @@
             top: 0;
             bottom: 0;
             padding-top: 40px;
-        }
-
-        div.inactive {
-            opacity: 0.4;
-        }
-
-        ol.core-instructions {
-            width: 600px;
-            padding: 15px;
-            margin: 0 auto;
-            text-align: justify;
-            background-color: white;
-            border-radius: 8px;
-            border: 1px solid #9b4dcb;
-        }
-
-        ol.core-instructions a {
-            font-weight: bold;
-        }
-
-        ol.core-instructions a:focus, ol.core-instructions a:hover {
-            color: #606c76;
         }
 
     </style>
@@ -97,79 +76,28 @@
 
 
 {% block subcontent %}
-    <h2>Core Sensor</h2>
-    {% if not grow.has_created_greengrass_core %}
-        <h3>You need to create a core sensor before adding any other sensors.</h3>
-        <form action="core/" method="post">
-            {% csrf_token %}
-            <button type="submit">Create Core Sensor</button>
-        </form>
-    {% else %}
-        <div id="core-status-container">
-            {% if not grow.aws_greengrass_core.has_been_setup %}
-                <ol class="core-instructions">
-                    <li>Steps to connect your core sensor:</li>
-                    <li>1.
-                        <a href="https://downloads.raspberrypi.org/raspbian/images/raspbian-2017-03-03/">
-                            Download Raspian 2017-03-02
-                        </a>
-                    </li>
-                    <li>2.
-                        Insert the SD card into your computer and run
-                        <a href="https://github.com/davidferguson/pibakery/releases">
-                            PiBakery 2.0
-                        </a>
-                    </li>
-                    <li>3.
-                        <a href="/grows/{{ grow.identifier }}/sensors/preferences/">
-                            Edit your sensor preferences (WiFi, usernames/passwords, SSH key, etc)
-                        </a>
-                    </li>
-                    <li>4.
-                        <a href="/grows/{{ grow.identifier }}/sensors/core/recipe/">Download your core's PiBakery
-                            recipe</a><br/>
-                        <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
-                    </li>
-                    <li>5. Open the recipe with PiBakery and flash your core device</li>
-                    <li>6. Boot up your device and wait on this page for updates</li>
-                </ol>
-            {% else %}
-                <h4>Core has been successfully setup!</h4>
-                <div>
-                <a href="/grows/{{ grow.identifier }}/sensors/core/">Core Details</a>
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
-    <div{% if not grow.has_created_greengrass_core %} class="inactive"{% endif %}>
-        <h2>Supporting Sensors</h2>
+    <div>
+        <h2>Sensors</h2>
         {% if not grow.sensors.count %}
-            <h3>None yet! Add a new sensor:</h3>
-            <div class="pick-sensor-type">
-                <ul>
-                    {% for available_sensor_type in available_sensor_types %}
-                        <li>
-                            {% if not grow.has_created_greengrass_core %}
-                                <span>
-                                    <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon>
-                                    <br/>
-                                    {{ available_sensor_type.value }}
-                                </span>
-                            {% else %}
-                                <a href="/grows/{{ grow.identifier }}/sensors/create/?type={{ available_sensor_type.value }}">
-                                    <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon>
-                                    <br/>
-                                    {{ available_sensor_type.value }}
-                                </a>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <h3>No sensors have been added to this grow!</h3>
         {% else %}
             {% for sensor in grow.sensors.all %}
-                <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a>
+                <h3><a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a></h3>
             {% endfor %}
         {% endif %}
+        <div class="pick-sensor-type">
+            <h3>Add a new sensor:</h3>
+            <ul>
+                {% for available_sensor_type in available_sensor_types %}
+                    <li title="{{ available_sensor_type.help_text }}">
+                        <a href="/grows/{{ grow.identifier }}/sensors/create/?type={{ available_sensor_type.value }}">
+                            <ion-icon size="large" name="{{ available_sensor_type.ionicon_name }}"></ion-icon>
+                            <br/>
+                            {{ available_sensor_type.value }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 {% endblock %}

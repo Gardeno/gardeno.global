@@ -23,8 +23,12 @@ class GrowForm(models.ModelForm):
 class GrowSensorForm(models.ModelForm):
     class Meta:
         model = Sensor
-        fields = ['type']
+        fields = ['name', 'type']
         widgets = {
+            "name": TextInput(attrs={
+                "required": True,
+                "placeholder": "Enter a memorable name for this sensor"
+            }),
             "type": Select(attrs={
                 "required": True
             }),

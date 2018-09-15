@@ -46,7 +46,8 @@ def grows_create(request):
     if request.POST:
         form = GrowForm(request.POST)
         if form.is_valid():
-            if request.user.created_grows.filter(date_archived__isnull=True).count() >= request.user.grow_limit:
+            if request.user.grow_limit > 0 and request.user.created_grows.filter(
+                    date_archived__isnull=True).count() >= request.user.grow_limit:
                 return HttpResponseRedirect("/grows/exceeded/")
             grow = Grow.objects.create(identifier=uuid.uuid4(),
                                        title=form.data['title'],
@@ -252,13 +253,20 @@ def grows_detail_sensors_create(request):
         'type': initial_type,
     })
     if request.POST:
-        form = GrowSensorForm(request.POST)
+        form = GrowSensorForm(request.POST, instance=Sensor(grow=request.grow,
+                                                            identifier=uuid.uuid4(),
+                                                            created_by_user=request.user))
         if form.is_valid():
-            sensor_type = form.data['type']
+            form.save()
+            return HttpResponseRedirect(
+                "/grows/{}/sensors/{}/".format(request.grow.identifier, form.instance.identifier))
+            '''
+            form.save()
+            sensor_type =
             sensor = Sensor.objects.create(grow=request.grow,
                                            identifier=uuid.uuid4(),
                                            created_by_user=request.user,
-                                           type=sensor_type)
+                                           type=form.data['type'],)
             response = settings.IOT_CLIENT.create_thing(
                 thingName='{}__{}'.format(request.grow.identifier, sensor.identifier),
                 thingTypeName=SENSOR_AWS_TYPE_LOOKUP[sensor_type],
@@ -274,6 +282,7 @@ def grows_detail_sensors_create(request):
             sensor.aws_thing_id = response['thingId']
             sensor.save()
             return HttpResponseRedirect("/grows/{}/sensors/{}/".format(request.grow.identifier, sensor.identifier))
+            '''
         else:
             error = 'Form is invalid'
     return render(request, 'grows/detail/edit/sensors/create.html', {

@@ -22,6 +22,12 @@ VISIBILITY_OPTIONS = [
 
 SENSOR_TYPES = [
     {
+        'value': 'Relay / Switch',
+        'ionicon_name': 'switch',
+        'help_text': 'Uses relay(s) to turn grow components on and off.',
+        'aws_thing_type_name': 'Ambient_Indoor_Grow_Sensor',
+    },
+    {
         'value': 'Ambient',
         'ionicon_name': 'thermometer',
         'help_text': 'Measures ambient temperature, humidity, pressure, etc for the grow.',
@@ -92,7 +98,6 @@ class Grow(BaseModel):
     visibility = models.CharField(max_length=255,
                                   choices=[(x, x) for x in VISIBILITY_OPTION_VALUES],
                                   default='Public')
-
 
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='created_grows')
 
@@ -368,11 +373,15 @@ class Sensor(BaseModel):
     grow = models.ForeignKey(Grow, null=True, related_name='sensors', on_delete=models.CASCADE)
     identifier = models.UUIDField(null=True)
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True)
     type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
     # AWS specific values
     aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.type)
 
 
 class GrowSensorPreferences(BaseModel):
