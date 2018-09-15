@@ -375,6 +375,7 @@ class Sensor(BaseModel):
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True)
     type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
+    has_been_setup = models.BooleanField(default=False)
     # AWS specific values
     aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
@@ -382,6 +383,25 @@ class Sensor(BaseModel):
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.type)
+
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+            "name": self.name,
+        }
+
+
+class SensorSetupToken(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='setup_tokens', on_delete=models.CASCADE)
+    identifier = models.UUIDField()
+    date_last_downloaded = models.DateTimeField(null=True, blank=True)
+    date_finished = models.DateTimeField(null=True, blank=True)
+
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+        }
 
 
 class GrowSensorPreferences(BaseModel):

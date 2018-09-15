@@ -38,42 +38,7 @@
 {% endblock %}
 
 {% block subfoot_additional %}
-
-
-    <script src="{% static "js/vendor/reconnecting-websocket.js" %}"></script>
-    <script>
-
-        var socket = new ReconnectingWebSocket('ws://' + window.location.host + '/ws' + window.location.pathname, null, {
-            debug: true,
-            reconnectInterval: 3000
-        });
-
-        socket.onopen = function open() {
-            console.log('WebSockets connection created.');
-            //socket.send('{}')
-        };
-
-        socket.onmessage = function (event) {
-            console.log('received event');
-            var data = JSON.parse(event.data);
-            if (data.type === 'sensor_core_update') {
-                var coreStatusContainer = document.getElementById('core-status-container');
-                if (data.update === 'setup_started') {
-                    coreStatusContainer.innerHTML = '<h4>Setup has started...</h4>';
-                } else if (data.update === 'setup_finished') {
-                    coreStatusContainer.innerHTML = '<h4>Core has been successfully setup!</h4>';
-                }
-            }
-        };
-
-        if (socket.readyState == WebSocket.OPEN) {
-            socket.onopen();
-        }
-
-    </script>
-
 {% endblock %}
-
 
 {% block subcontent %}
     <div>

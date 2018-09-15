@@ -3,7 +3,7 @@ from channels.generic.websocket import WebsocketConsumer
 import json
 
 
-class SensorConsumer(WebsocketConsumer):
+class GrowConsumer(WebsocketConsumer):
     def connect(self, **kwargs):
         self.group_name = 'grow-{}'.format(self.scope['url_route']['kwargs']['grow_id'])
         # self.channel_name = 'sensors'
@@ -24,8 +24,8 @@ class SensorConsumer(WebsocketConsumer):
     def receive(self, text_data):
         print('Received message...: {}'.format(text_data))
 
-    def sensor_core_update(self, event):
+    def sensor_update(self, event):
         self.send(text_data=json.dumps({
-            'type': 'sensor_core_update',
-            'update': event['update']
+            'type': 'sensor_update',
+            'data': event['data']
         }))

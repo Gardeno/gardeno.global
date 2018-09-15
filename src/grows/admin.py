@@ -1,11 +1,11 @@
 from django.contrib.gis import admin
 from .models import Grow, Rack, Tray, TrayPosition, Sensor, AWSGreengrassCore, AWSGreengrassGroup, \
-    GrowSensorPreferences, AWSGreengrassCoreSetupToken
+    GrowSensorPreferences, SensorSetupToken
 
 
-class AWSGreengrassCoreSetupTokenAdmin(admin.ModelAdmin):
+class SensorSetupTokenAdmin(admin.ModelAdmin):
     readonly_fields = ['date_created']
-    list_display = ['date_created', 'identifier', 'aws_greengrass_core', 'date_last_downloaded']
+    list_display = ['date_created', 'identifier', 'sensor', 'date_last_downloaded']
 
 
 admin.site.register(Grow, admin.OSMGeoAdmin)
@@ -16,4 +16,4 @@ admin.site.register(Sensor)
 admin.site.register(AWSGreengrassCore)
 admin.site.register(AWSGreengrassGroup)
 admin.site.register(GrowSensorPreferences)
-admin.site.register(AWSGreengrassCoreSetupToken, AWSGreengrassCoreSetupTokenAdmin)
+admin.site.register(SensorSetupToken, SensorSetupTokenAdmin)
