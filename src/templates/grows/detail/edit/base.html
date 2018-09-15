@@ -77,6 +77,8 @@
             if (data.type === 'sensor_update') {
                 if (data.data.event === 'setup_download') {
                     toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded setup file.");
+                } else if (data.data.event === 'setup_finished') {
+                    toastr["success"]("Sensor '" + data.data.sensor.name + "' has finished being setup!");
                 } else {
                     console.warn('Unknown sensor update: ', data);
                 }
