@@ -32,6 +32,8 @@
                 toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded the executable script.");
             } else if (data.data.event === 'setup_finished') {
                 toastr["success"]("Sensor '" + data.data.sensor.name + "' has finished being setup!");
+            } else if (data.data.event === 'sensor_rebooted') {
+                toastr["info"]("Sensor '" + data.data.sensor.name + "' has rebooted.");
             } else {
                 console.warn('Unknown sensor update: ', data);
             }
