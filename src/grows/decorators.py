@@ -1,5 +1,5 @@
 from .models import Grow, Sensor, SensorSetupToken
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, JsonResponse
 
 
 def lookup_grow(function):

@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from .models import Grow, Rack, Tray, TrayPosition, Sensor, AWSGreengrassCore, AWSGreengrassGroup, \
-    GrowSensorPreferences, SensorSetupToken
+    GrowSensorPreferences, SensorSetupToken, SensorUpdate
 
 
 class SensorSetupTokenAdmin(admin.ModelAdmin):
@@ -17,3 +17,4 @@ admin.site.register(AWSGreengrassCore)
 admin.site.register(AWSGreengrassGroup)
 admin.site.register(GrowSensorPreferences)
 admin.site.register(SensorSetupToken, SensorSetupTokenAdmin)
+admin.site.register(SensorUpdate)

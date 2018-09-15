@@ -404,6 +404,12 @@ class SensorSetupToken(models.Model):
         }
 
 
+class SensorUpdate(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='updates', on_delete=models.CASCADE)
+    update = models.TextField(null=True)
+
+
 class GrowSensorPreferences(BaseModel):
     grow = models.OneToOneField(Grow, related_name='preferences', on_delete=models.CASCADE)
     wifi_network_name = models.CharField(max_length=255, null=True, blank=True)

@@ -57,49 +57,16 @@
 
     <script src="{% static "vendor/reconnecting-websocket/reconnecting-websocket.min.js" %}"></script>
     <script src="{% static "vendor/toastr/toastr.min.js" %}"></script>
-
     <script>
-
-        toastr.options.closeButton = true;
-
-        var socket = new ReconnectingWebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/grows/{{ grow.identifier  }}/', null, {
-            debug: true,
-            reconnectInterval: 3000
-        });
-
-        socket.onopen = function open() {
-            console.log('WebSockets connection created.');
-            //socket.send('{}')
-        };
-
-        socket.onmessage = function (event) {
-            var data = JSON.parse(event.data);
-            if (data.type === 'sensor_update') {
-                if (data.data.event === 'setup_download') {
-                    toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded setup file.");
-                } else if (data.data.event === 'setup_finished') {
-                    toastr["success"]("Sensor '" + data.data.sensor.name + "' has finished being setup!");
-                } else {
-                    console.warn('Unknown sensor update: ', data);
-                }
-                /*
-                 var coreStatusContainer = document.getElementById('core-status-container');
-                 if (data.update === 'setup_started') {
-                 coreStatusContainer.innerHTML = '<h4>Setup has started...</h4>';
-                 } else if (data.update === 'setup_finished') {
-                 coreStatusContainer.innerHTML = '<h4>Core has been successfully setup!</h4>';
-                 }
-                 */
-            } else {
-                console.warn('Unknown message type: ', data)
+        var GROW_IDENTIFIER = '{{ grow.identifier  }}';
+        var SOUND_URLS = {
+            success: {
+                mp3: "{% static "sounds/plucky.mp3" %}",
+                ogg: "{% static "sounds/plucky.ogg" %}",
             }
-        };
-
-        if (socket.readyState == WebSocket.OPEN) {
-            socket.onopen();
         }
-
     </script>
+    <script src="{% static "grows/detail/edit/base.js" %}"></script>
 
     {% block subfoot_additional %}{% endblock %}
 {% endblock %}

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
+    SENSOR_TYPES, SensorUpdate
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
@@ -15,6 +15,7 @@ import string
 from django.views.decorators.csrf import csrf_exempt
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import json
 
 alphabet = string.ascii_letters + string.digits
 
@@ -209,17 +210,26 @@ def grows_detail_sensors_detail_recipe(request):
         return response
 
 
-@grow_sensor_setup_token_is_valid
-def grows_detail_sensors_detail_setup(request):
-    layer = get_channel_layer()
-    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
+def _sensor_update(request, update_event):
+    message = {
         'type': 'sensor_update',
         'data': {
-            'event': 'setup_download',
+            'event': update_event,
             'setup_token': request.setup_token.to_json(),
             'sensor': request.sensor.to_json(),
         }
-    })
+    }
+    SensorUpdate.objects.create(
+        sensor=request.sensor,
+        update=json.dumps(message),
+    )
+    layer = get_channel_layer()
+    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), message)
+
+
+@grow_sensor_setup_token_is_valid
+def grows_detail_sensors_detail_setup(request):
+    _sensor_update(request, 'setup_download')
     if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
         return HttpResponseBadRequest('Setup script has expired')
     with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_gardeno_software.sh')) as executable_file:
@@ -240,12 +250,20 @@ def grows_detail_sensors_detail_setup(request):
                                                             settings.AWS_IOT_CUSTOM_ENDPOINT)
         read_executable_file = read_executable_file.replace('[AWS_REGION_HERE]', settings.AWS_DEFAULT_REGION)
         '''
+        base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
+                                                           request.sensor.identifier)
+
+        read_executable_file = read_executable_file.replace('[SENSOR_URL]', base_sensor_url)
+        read_executable_file = read_executable_file.replace('[STARTED_SETUP_URL]',
+                                                            '{}setup/{}/started/'.format(base_sensor_url,
+                                                                                         request.setup_token.identifier))
+
+        read_executable_file = read_executable_file.replace('[MAIN_EXECUTABLE_DOWNLOAD_URL]',
+                                                            '{}setup/{}/download/'.format(base_sensor_url,
+                                                                                          request.setup_token.identifier))
         read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
-                                                            '{}/grows/{}/sensors/{}/setup/{}/finished/'.format(
-                                                                settings.SITE_URL,
-                                                                request.grow.identifier,
-                                                                request.sensor.identifier,
-                                                                request.setup_token.identifier))
+                                                            '{}setup/{}/finished/'.format(base_sensor_url,
+                                                                                          request.setup_token.identifier))
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename={}-setup_gardeno_software.sh'.format(request.grow)
         request.setup_token.date_last_downloaded = datetime.now(timezone.utc)
@@ -255,23 +273,33 @@ def grows_detail_sensors_detail_setup(request):
 
 @csrf_exempt
 @grow_sensor_setup_token_is_valid
+def grows_detail_sensors_detail_setup_started(request):
+    if not request.POST:
+        return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
+    _sensor_update(request, 'setup_started')
+    return JsonResponse({"success": True})
+
+
+@grow_sensor_setup_token_is_valid
+def grows_detail_sensors_detail_setup_download(request):
+    _sensor_update(request, 'setup_download')
+    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'gardeno.py')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=gardeno.py'
+        return response
+
+
+@csrf_exempt
+@grow_sensor_setup_token_is_valid
 def grows_detail_sensors_detail_setup_finished(request):
-    layer = get_channel_layer()
-    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
-        'type': 'sensor_update',
-        'data': {
-            'event': 'setup_finished',
-            'setup_token': request.setup_token.to_json(),
-            'sensor': request.sensor.to_json(),
-        }
-    })
+    if not request.POST:
+        return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
+    _sensor_update(request, 'setup_finished')
     request.setup_token.sensor.has_been_setup = True
     request.setup_token.sensor.save()
     request.setup_token.date_finished = datetime.now(timezone.utc)
     request.setup_token.save()
-    if not request.POST:
-        # return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
-        pass
     return JsonResponse({"success": True})
 
 
