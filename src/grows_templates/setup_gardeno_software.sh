@@ -15,7 +15,7 @@ echo "SENSOR_URL=\"[SENSOR_URL]\"" >> /etc/environment
 
 curl [MAIN_EXECUTABLE_DOWNLOAD_URL] --output /home/pi/gardeno.py
 chmod +x /home/pi/gardeno.py
-#chown pi:pi /home/pi/gardeno.pu
+#chown pi:pi /home/pi/gardeno.py
 
 IFS='' read -r -d '' SupervisorConfiguration <<"EOF"
 [program:gardeno]
