@@ -28,6 +28,8 @@
                 toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded setup file.");
             } else if (data.data.event === 'setup_started') {
                 toastr["info"]("Sensor '" + data.data.sensor.name + "' has started setup!");
+            } else if (data.data.event === 'setup_executable_download') {
+                toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded the executable script.");
             } else if (data.data.event === 'setup_finished') {
                 toastr["success"]("Sensor '" + data.data.sensor.name + "' has finished being setup!");
             } else {

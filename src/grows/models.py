@@ -409,6 +409,12 @@ class SensorUpdate(models.Model):
     sensor = models.ForeignKey(Sensor, related_name='updates', on_delete=models.CASCADE)
     update = models.TextField(null=True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.sensor, self.date_created)
+
+    class Meta:
+        ordering = ['-date_created']
+
 
 class GrowSensorPreferences(BaseModel):
     grow = models.OneToOneField(Grow, related_name='preferences', on_delete=models.CASCADE)

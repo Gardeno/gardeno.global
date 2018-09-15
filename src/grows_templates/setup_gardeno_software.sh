@@ -9,9 +9,13 @@ curl --header "Content-Type: application/json" \
 
 apt-get update
 
+echo "$(date) - Installing dependencies" >> /home/pi/setup.log
+
 apt-get install -y autossh htop telnet supervisor
 
 echo "SENSOR_URL=\"[SENSOR_URL]\"" >> /etc/environment
+
+echo "$(date) - Downloading executable" >> /home/pi/setup.log
 
 curl [MAIN_EXECUTABLE_DOWNLOAD_URL] --output /home/pi/gardeno.py
 chmod +x /home/pi/gardeno.py
@@ -28,7 +32,9 @@ stdout_logfile = /var/log/supervisor/gardeno.log
 stderr_logfile = /var/log/supervisor/gardeno.log
 EOF
 
-echo $SupervisorConfiguration > /etc/supervisor/conf.d/gardeno.conf
+echo "${SupervisorConfiguration}" > /etc/supervisor/conf.d/gardeno.conf
+
+echo "$(date) - Restarting supervisor" >> /home/pi/setup.log
 
 service supervisor restart
 
@@ -37,5 +43,8 @@ curl --header "Content-Type: application/json" \
   --data '{}' \
   [FINISHED_SETUP_URL]
 
-echo -e '#!/usr/bin/env bash\n# Update script will be here potentially' > /boot/PiBakery/everyBoot.sh
+echo -e '#!/usr/bin/env bash\ncurl [UPDATE_URL] | bash' > /boot/PiBakery/everyBoot.sh
 
+echo "$(date) - Finished setting up. Rebooting." >> /home/pi/setup.log
+
+reboot

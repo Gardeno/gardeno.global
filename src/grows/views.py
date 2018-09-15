@@ -4,7 +4,7 @@ from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
     SENSOR_TYPES, SensorUpdate
 import uuid
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
     grow_sensor_setup_token_is_valid
 from datetime import datetime, timezone
@@ -210,49 +210,29 @@ def grows_detail_sensors_detail_recipe(request):
         return response
 
 
-def _sensor_update(request, update_event):
+def _sensor_update(sensor, update_event):
     message = {
         'type': 'sensor_update',
         'data': {
             'event': update_event,
-            'setup_token': request.setup_token.to_json(),
-            'sensor': request.sensor.to_json(),
+            'sensor': sensor.to_json(),
         }
     }
     SensorUpdate.objects.create(
-        sensor=request.sensor,
+        sensor=sensor,
         update=json.dumps(message),
     )
     layer = get_channel_layer()
-    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), message)
+    async_to_sync(layer.group_send)('grow-{}'.format(sensor.grow.identifier), message)
 
 
 @grow_sensor_setup_token_is_valid
 def grows_detail_sensors_detail_setup(request):
-    _sensor_update(request, 'setup_download')
-    if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
-        return HttpResponseBadRequest('Setup script has expired')
+    _sensor_update(request.sensor, 'setup_download')
     with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_gardeno_software.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
-        '''
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_NAME]',
-                                                            aws_greengrass_core.thing_name)
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ARN]',
-                                                            aws_greengrass_core.thing_name)
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ID]', aws_greengrass_core.thing_id)
-        read_executable_file = read_executable_file.replace('[REPLACE_CERT_PEM]', aws_greengrass_core.certificate_pem)
-        read_executable_file = read_executable_file.replace('[REPLACE_PRIVATE_KEY]',
-                                                            aws_greengrass_core.certificate_keypair_private)
-        read_executable_file = read_executable_file.replace('[REPLACE_PUBLIC_KEY]',
-                                                            aws_greengrass_core.certificate_keypair_public)
-        read_executable_file = read_executable_file.replace('[THING_ARN_HERE]', aws_greengrass_core.thing_arn)
-        read_executable_file = read_executable_file.replace('[AWS_IOT_CUSTOM_ENDPOINT]',
-                                                            settings.AWS_IOT_CUSTOM_ENDPOINT)
-        read_executable_file = read_executable_file.replace('[AWS_REGION_HERE]', settings.AWS_DEFAULT_REGION)
-        '''
         base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
                                                            request.sensor.identifier)
-
         read_executable_file = read_executable_file.replace('[SENSOR_URL]', base_sensor_url)
         read_executable_file = read_executable_file.replace('[STARTED_SETUP_URL]',
                                                             '{}setup/{}/started/'.format(base_sensor_url,
@@ -264,6 +244,9 @@ def grows_detail_sensors_detail_setup(request):
         read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
                                                             '{}setup/{}/finished/'.format(base_sensor_url,
                                                                                           request.setup_token.identifier))
+
+        read_executable_file = read_executable_file.replace('[UPDATE_URL]',
+                                                            '{}update/'.format(base_sensor_url))
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename={}-setup_gardeno_software.sh'.format(request.grow)
         request.setup_token.date_last_downloaded = datetime.now(timezone.utc)
@@ -276,13 +259,13 @@ def grows_detail_sensors_detail_setup(request):
 def grows_detail_sensors_detail_setup_started(request):
     if not request.POST:
         return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
-    _sensor_update(request, 'setup_started')
+    _sensor_update(request.sensor, 'setup_started')
     return JsonResponse({"success": True})
 
 
 @grow_sensor_setup_token_is_valid
 def grows_detail_sensors_detail_setup_download(request):
-    _sensor_update(request, 'setup_download')
+    _sensor_update(request.sensor, 'setup_executable_download')
     with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'gardeno.py')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         response = HttpResponse(read_executable_file, content_type='application/force-download')
@@ -295,12 +278,25 @@ def grows_detail_sensors_detail_setup_download(request):
 def grows_detail_sensors_detail_setup_finished(request):
     if not request.POST:
         return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
-    _sensor_update(request, 'setup_finished')
+    _sensor_update(request.sensor, 'setup_finished')
     request.setup_token.sensor.has_been_setup = True
     request.setup_token.sensor.save()
     request.setup_token.date_finished = datetime.now(timezone.utc)
     request.setup_token.save()
     return JsonResponse({"success": True})
+
+
+def grows_detail_sensors_detail_update(request, grow_id, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    _sensor_update(sensor, 'sensor_rebooted')
+    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'sensor_update.sh')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=sensor_update.sh'
+        return response
 
 
 @lookup_grow

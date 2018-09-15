@@ -1,5 +1,6 @@
 from .models import Grow, Sensor, SensorSetupToken
-from django.http import HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
+from datetime import datetime, timezone
 
 
 def lookup_grow(function):
@@ -10,14 +11,8 @@ def lookup_grow(function):
         except Exception as exception:
             raise Http404
         request.grow = grow
-        if request.grow.is_owned_by_user(request.user):
-            # If we've never created the Greengrass group (likely an error)
-            # we force a redirect. The system does not function without one.
-            if not request.grow.has_created_greengrass_group:
-                create_group_url = '/grows/{}/group/'.format(request.grow.identifier)
-                if request.get_full_path() != create_group_url:
-                    return HttpResponseRedirect(create_group_url)
-        elif not grow.date_published or grow.visibility == 'Private':
+        if not request.grow.is_owned_by_user(request.user) and (
+            not grow.date_published or grow.visibility == 'Private'):
             raise Http404
         return function(request, *args, **kwargs)
 
@@ -79,6 +74,8 @@ def grow_sensor_setup_token_is_valid(function):
         except Exception as err:
             print(err)
             raise Http404
+        if (datetime.now(timezone.utc) - setup_token.date_created).total_seconds() > 60 * 60 * 24:
+            return HttpResponseBadRequest('Setup script has expired')
         request.setup_token = setup_token
         request.sensor = setup_token.sensor
         request.grow = setup_token.sensor.grow

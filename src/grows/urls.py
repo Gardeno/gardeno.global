@@ -3,7 +3,7 @@ from .views import grows_list, grows_create, grows_detail, grows_detail_sensors,
     grows_detail_update, grows_detail_sensors_detail, grows_exceeded, grows_detail_group, \
     grows_detail_sensors_preferences, grows_detail_sensors_detail_recipe, grows_detail_sensors_detail_setup, \
     grows_detail_sensors_detail_setup_started, grows_detail_sensors_detail_setup_download, \
-    grows_detail_sensors_detail_setup_finished
+    grows_detail_sensors_detail_setup_finished, grows_detail_sensors_detail_update
 
 urlpatterns = [
     path('', grows_list),
@@ -20,5 +20,6 @@ urlpatterns = [
     path('<grow_id>/sensors/<sensor_id>/setup/<setup_id>/started/', grows_detail_sensors_detail_setup_started),
     path('<grow_id>/sensors/<sensor_id>/setup/<setup_id>/download/', grows_detail_sensors_detail_setup_download),
     path('<grow_id>/sensors/<sensor_id>/setup/<setup_id>/finished/', grows_detail_sensors_detail_setup_finished),
+    path('<grow_id>/sensors/<sensor_id>/update/', grows_detail_sensors_detail_update),
     path('<grow_id>/update/', grows_detail_update),
 ]
