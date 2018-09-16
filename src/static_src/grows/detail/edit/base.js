@@ -23,7 +23,7 @@
     socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
         if (data.type === 'sensor_update') {
-            var message, messageType = 'info', playSound = true;
+            var message, messageType = 'info', shouldPlaySound = true;
             if (data.data.event === 'setup_download') {
                 message = "Sensor '" + data.data.sensor.name + "' has downloaded setup file.";
             } else if (data.data.event === 'setup_started') {
@@ -38,7 +38,7 @@
             } else {
                 console.warn('Unknown sensor update: ', data);
             }
-            if (playSound) {
+            if (shouldPlaySound) {
                 playSound(SOUND_URLS.success.mp3, SOUND_URLS.success.ogg);
             }
             if (message && messageType) {
