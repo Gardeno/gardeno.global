@@ -23,19 +23,30 @@
     socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
         if (data.type === 'sensor_update') {
-            playSound(SOUND_URLS.success.mp3, SOUND_URLS.success.ogg);
+            var message, messageType = 'info', playSound = true;
             if (data.data.event === 'setup_download') {
-                toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded setup file.");
+                message = "Sensor '" + data.data.sensor.name + "' has downloaded setup file.";
             } else if (data.data.event === 'setup_started') {
-                toastr["info"]("Sensor '" + data.data.sensor.name + "' has started setup!");
+                message = "Sensor '" + data.data.sensor.name + "' has started setup!"
             } else if (data.data.event === 'setup_executable_download') {
-                toastr["info"]("Sensor '" + data.data.sensor.name + "' has downloaded the executable script.");
+                message = "Sensor '" + data.data.sensor.name + "' has downloaded the executable script.";
             } else if (data.data.event === 'setup_finished') {
-                toastr["success"]("Sensor '" + data.data.sensor.name + "' has finished being setup!");
+                message = "Sensor '" + data.data.sensor.name + "' has finished being setup!";
+                messageType = 'success';
             } else if (data.data.event === 'sensor_rebooted') {
-                toastr["info"]("Sensor '" + data.data.sensor.name + "' has rebooted.");
+                message = "Sensor '" + data.data.sensor.name + "' has rebooted.";
             } else {
                 console.warn('Unknown sensor update: ', data);
+            }
+            if (playSound) {
+                playSound(SOUND_URLS.success.mp3, SOUND_URLS.success.ogg);
+            }
+            if (message && messageType) {
+                toastr[messageType](message);
+                var sensorUpdateItem = $(".sensor-updates");
+                if (sensorUpdateItem.length > 0) {
+                    sensorUpdateItem.prepend('<div>' + message + '</div>');
+                }
             }
         } else {
             console.warn('Unknown message type: ', data)

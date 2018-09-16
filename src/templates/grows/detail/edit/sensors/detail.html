@@ -1,5 +1,7 @@
 {% extends "grows/detail/edit/base.html" %}
 
+{% load humanize %}
+
 {% block subhead_additional %}
     <style>
         ol.core-instructions {
@@ -49,12 +51,26 @@
                 </a>
             </li>
             <li>4.
-                <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/recipe/">Download your sensor's PiBakery
+                <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/recipe/">Download your sensor's
+                    PiBakery
                     recipe</a><br/>
                 <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
             </li>
             <li>5. Open the recipe with PiBakery and flash your device</li>
             <li>6. Boot up your device and wait on this page for updates</li>
         </ol>
+    </div>
+    <div>
+        <h2>Sensor updates:</h2>
+    </div>
+    <div>
+        <h3{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not connected to Gardeno yet</h3>
+        <div class="sensor-updates">
+            {% for update in sensor.updates.all %}
+                <div>
+                    {{ update.date_created|naturaltime }} : {{ update.update_object.data.event }}
+                </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}

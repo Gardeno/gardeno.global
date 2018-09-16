@@ -409,6 +409,10 @@ class SensorUpdate(models.Model):
     sensor = models.ForeignKey(Sensor, related_name='updates', on_delete=models.CASCADE)
     update = models.TextField(null=True)
 
+    @property
+    def update_object(self):
+        return json.loads(self.update)
+
     def __str__(self):
         return '{} - {}'.format(self.sensor, self.date_created)
 

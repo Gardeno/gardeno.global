@@ -286,7 +286,7 @@ def grows_detail_sensors_detail_setup_finished(request):
     return JsonResponse({"success": True})
 
 
-def grows_detail_sensors_detail_update(request, grow_id, sensor_id=None):
+def grows_detail_sensors_detail_update(request, grow_id=None, sensor_id=None):
     try:
         sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
     except Exception as exception:
@@ -296,6 +296,30 @@ def grows_detail_sensors_detail_update(request, grow_id, sensor_id=None):
         read_executable_file = ''.join(executable_file.readlines())
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=sensor_update.sh'
+        return response
+
+
+def grows_detail_sensors_detail_executable(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'gardeno.py')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=gardeno.py'
+        return response
+
+
+def grows_detail_sensors_detail_requirements(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'requirements.txt')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=requirements.txt'
         return response
 
 
