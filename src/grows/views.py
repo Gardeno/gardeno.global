@@ -294,6 +294,8 @@ def grows_detail_sensors_detail_update(request, grow_id=None, sensor_id=None):
     _sensor_update(sensor, 'sensor_rebooted')
     with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'sensor_update.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
+        base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, sensor.grow.identifier, sensor.identifier)
+        read_executable_file = read_executable_file.replace('${SENSOR_URL}', '{}'.format(base_sensor_url))
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=sensor_update.sh'
         return response

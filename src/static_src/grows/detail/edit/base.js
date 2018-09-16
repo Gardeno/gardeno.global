@@ -45,6 +45,7 @@
                 toastr[messageType](message);
                 var sensorUpdateItem = $(".sensor-updates");
                 if (sensorUpdateItem.length > 0) {
+                    $(".no-sensor-updates").hide();
                     sensorUpdateItem.prepend('<div>' + message + '</div>');
                 }
             }

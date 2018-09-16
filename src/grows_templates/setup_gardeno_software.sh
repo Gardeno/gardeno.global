@@ -40,10 +40,6 @@ EOF
 
 echo "${SupervisorConfiguration}" > /etc/supervisor/conf.d/gardeno.conf
 
-echo "$(date) - Restarting supervisor" >> /home/pi/setup.log
-
-service supervisor restart
-
 curl --header "Content-Type: application/json" \
   --request POST \
   --data '{}' \

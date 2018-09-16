@@ -3,6 +3,7 @@
 import time
 import logging
 import sys
+from Adafruit_SHT31 import *
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)

@@ -64,7 +64,7 @@
         <h2>Sensor updates:</h2>
     </div>
     <div>
-        <h3{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not connected to Gardeno yet</h3>
+        <h3 class="no-sensor-updates"{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not connected to Gardeno yet</h3>
         <div class="sensor-updates">
             {% for update in sensor.updates.all %}
                 <div>

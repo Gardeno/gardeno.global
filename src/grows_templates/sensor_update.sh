@@ -4,13 +4,11 @@
 
 echo "$(date) - Updating." >> /home/pi/setup.log
 
-echo "$(date) - Downloading requirements." >> /home/pi/setup.log
-
-echo "${SENSOR_URL}requirements/"
+echo "$(date) - Downloading requirements from ${SENSOR_URL}requirements/." >> /home/pi/setup.log
 
 sudo -u pi curl "${SENSOR_URL}requirements/" --output /home/pi/gardeno/requirements.txt
 
-echo "$(date) - Downloading executable." >> /home/pi/setup.log
+echo "$(date) - Downloading executable from ${SENSOR_URL}executable/." >> /home/pi/setup.log
 
 sudo -u pi curl "${SENSOR_URL}executable/" --output /home/pi/gardeno/main.py
 sudo -u pi chmod +x /home/pi/gardeno/main.py
