@@ -4,6 +4,8 @@ from django.contrib.auth.models import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import now
+from django.conf import settings
+import jwt
 
 
 class UserManager(BaseUserManager):
@@ -114,6 +116,9 @@ class User(AbstractBaseUser):
         if memberships.count() == 0:
             self.create_default_team()
         return memberships
+
+    def generate_auth_token(self):
+        return jwt.encode({"email": self.email}, settings.JWT_SECRET, algorithm='HS256').decode('utf-8')
 
     def to_json(self):
         return {

@@ -64,11 +64,34 @@
         <h2>Sensor updates:</h2>
     </div>
     <div>
-        <h3 class="no-sensor-updates"{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not connected to Gardeno yet</h3>
+        <h3 class="no-sensor-updates"{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not
+            connected to Gardeno yet</h3>
         <div class="sensor-updates">
             {% for update in sensor.updates.all %}
                 <div>
                     {{ update.date_created|naturaltime }} : {{ update.update_object.data.event }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h2>Sensor authentication tokens:</h2>
+    </div>
+    <div>
+        <h3 class="no-sensor-authentication-tokens"{% if sensor.authentication_tokens.count %}
+            style="display: none"{% endif %}>Sensor has no authentication tokens</h3>
+        <div class="sensor-authentication-token-updates">
+            {% for authentication_token in sensor.authentication_tokens.all %}
+                <div>
+                    Generated {{ authentication_token.date_created|naturaltime }}
+                </div>
+                <div>
+                    Last used:
+                    {% if not authentication_token.date_last_used %}
+                        Never
+                    {% else %}
+                        {{ authentication_token.date_last_used|naturaltime }}
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

@@ -3,19 +3,19 @@
   <block type="onfirstboot" id=":Hrs40v{PBa+P)_/N`B1" x="5" y="-853">
     <next>
       <block type="wifisetup" id=".M`:K7*bBv31;(kz)#|u">
-        <field name="1">{NETWORK_NAME}</field>
-        <field name="2">{NETWORK_PASSWORD}</field>
-        <field name="3">{NETWORK_TYPE}</field>
-        <field name="4">{NETWORK_ISO_3166_COUNTRY}</field>
+        <field name="1">[NETWORK_NAME]</field>
+        <field name="2">[NETWORK_PASSWORD]</field>
+        <field name="3">[NETWORK_TYPE]</field>
+        <field name="4">[NETWORK_ISO_3166_COUNTRY]</field>
         <next>
           <block type="changepass" id="0.EkAe;`OzQe(kU)AFm|">
-            <field name="1">{USER_PASSWORD}</field>
+            <field name="1">[USER_PASSWORD]</field>
             <next>
               <block type="sethostname" id="BG#tY6,QTHdvKBe2Ie6{">
-                <field name="1">{SENSOR_HOSTNAME}</field>
+                <field name="1">[SENSOR_HOSTNAME]</field>
                 <next>
                   <block type="authorizekey" id="n_FP/mdktr+:UzD?2ZTb">
-                    <field name="1">{PUBLIC_SSH_KEY}</field>
+                    <field name="1">[PUBLIC_SSH_KEY]</field>
                     <field name="2">pi</field>
                     <next>
                       <block type="runcommand" id="rebx%u+d6#N-nm6Fx}KS">
@@ -62,7 +62,7 @@
   <block type="onboot" id="]wAJhfSECR.Tc_x,ye34" x="598" y="-847">
     <next>
       <block type="downloadfile" id="U]=z],7@hYi3Uo_!DGkC">
-        <field name="1">{DOWNLOAD_FILE_URL}</field>
+        <field name="1">[DOWNLOAD_FILE_URL]</field>
         <field name="2">/home/pi/setup_gardeno_software.sh</field>
         <next>
           <block type="runcommand" id="t;q=0v|@t-*2-)5K)DL=">

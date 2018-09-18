@@ -7,6 +7,7 @@ import logging
 import json
 from .greengrass_policy import GREENGRASS_POLICY
 from django_countries.fields import CountryField
+import jwt
 
 VISIBILITY_OPTIONS = [
     {
@@ -384,6 +385,15 @@ class Sensor(BaseModel):
     def __str__(self):
         return '{} ({})'.format(self.name, self.type)
 
+    def generate_auth_token(self):
+        active_authentication_tokens = self.authentication_tokens.filter(date_deactivated__isnull=True)
+        if not active_authentication_tokens:
+            active_authentication_token = SensorAuthenticationToken.objects.create(sensor=self)
+        else:
+            active_authentication_token = active_authentication_tokens[0]
+        return jwt.encode({"sensor_authentication_token_id": active_authentication_token.id}, settings.JWT_SECRET,
+                          algorithm='HS256').decode('utf-8')
+
     def to_json(self):
         return {
             "identifier": str(self.identifier),
@@ -402,6 +412,13 @@ class SensorSetupToken(models.Model):
         return {
             "identifier": str(self.identifier),
         }
+
+
+class SensorAuthenticationToken(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_deactivated = models.DateTimeField(null=True, blank=True)
+    sensor = models.ForeignKey(Sensor, related_name='authentication_tokens', on_delete=models.CASCADE)
+    date_last_used = models.DateTimeField(null=True, blank=True)
 
 
 class SensorUpdate(models.Model):

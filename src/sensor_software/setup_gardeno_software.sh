@@ -4,11 +4,6 @@
 
 echo "$(date) - Setting up" >> /home/pi/setup.log
 
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{}' \
-  [STARTED_SETUP_URL]
-
 apt-get update
 
 echo "$(date) - Installing dependencies" >> /home/pi/setup.log
@@ -18,15 +13,11 @@ pip install virtualenv
 
 mkdir /home/pi/gardeno
 
-virtualenv -p python3.4 /home/pi/gardeno/venv/
+echo "$(date) - Creating virtualenv" >> /home/pi/setup.log
 
-echo "SENSOR_URL=\"[SENSOR_URL]\"" >> /etc/environment
+virtualenv -p python3 /home/pi/gardeno/venv/
 
-echo "$(date) - Downloading executable" >> /home/pi/setup.log
-
-curl [MAIN_EXECUTABLE_DOWNLOAD_URL] --output /home/pi/gardeno/main.py
-chmod +x /home/pi/gardeno/main.py
-chown -R pi:pi /home/pi/gardeno/
+echo "$(date) - Setting up supervisor" >> /home/pi/setup.log
 
 IFS='' read -r -d '' SupervisorConfiguration <<"EOF"
 [program:gardeno]
@@ -40,10 +31,7 @@ EOF
 
 echo "${SupervisorConfiguration}" > /etc/supervisor/conf.d/gardeno.conf
 
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{}' \
-  [FINISHED_SETUP_URL]
+curl [FINISHED_SETUP_URL]
 
 echo -e '#!/usr/bin/env bash\ncurl [UPDATE_URL] | bash' > /boot/PiBakery/everyBoot.sh
 

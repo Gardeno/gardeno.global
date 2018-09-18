@@ -181,30 +181,32 @@ def grows_detail_sensors_detail(request):
 def grows_detail_sensors_detail_recipe(request):
     setup_token = SensorSetupToken.objects.create(sensor=request.sensor,
                                                   identifier=uuid.uuid4())
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'WithWifi.xml')) as xml_file:
+    base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
+                                                       request.sensor.identifier)
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'BaseRaspberryPiRecipe.xml')) as xml_file:
         read_xml_file = ''.join(xml_file.readlines())
-        read_xml_file = read_xml_file.replace('{SENSOR_HOSTNAME}',
+        read_xml_file = read_xml_file.replace('[SENSOR_HOSTNAME]',
                                               'sensor-{}'.format(request.sensor.identifier))
-        read_xml_file = read_xml_file.replace('{DOWNLOAD_FILE_URL}',
-                                              '{}/grows/{}/sensors/{}/setup/{}/'.format(settings.SITE_URL,
-                                                                                        request.grow.identifier,
-                                                                                        request.sensor.identifier,
-                                                                                        setup_token.identifier))
+        read_xml_file = read_xml_file.replace('[DOWNLOAD_FILE_URL]',
+                                              '{}setup/{}/'.format(base_sensor_url, setup_token.identifier))
+        read_xml_file = read_xml_file.replace('[STARTED_SETUP_URL]',
+                                              '{}setup/{}/started/'.format(base_sensor_url,
+                                                                           setup_token.identifier))
         generated_user_password = None
         if hasattr(request.grow, 'preferences'):
-            read_xml_file = read_xml_file.replace('{NETWORK_NAME}', request.grow.preferences.wifi_network_name)
-            read_xml_file = read_xml_file.replace('{NETWORK_PASSWORD}', request.grow.preferences.wifi_password)
-            read_xml_file = read_xml_file.replace('{NETWORK_TYPE}', request.grow.preferences.wifi_type)
-            read_xml_file = read_xml_file.replace('{NETWORK_ISO_3166_COUNTRY}',
+            read_xml_file = read_xml_file.replace('[NETWORK_NAME]', request.grow.preferences.wifi_network_name)
+            read_xml_file = read_xml_file.replace('[NETWORK_PASSWORD]', request.grow.preferences.wifi_password)
+            read_xml_file = read_xml_file.replace('[NETWORK_TYPE]', request.grow.preferences.wifi_type)
+            read_xml_file = read_xml_file.replace('[NETWORK_ISO_3166_COUNTRY]',
                                                   request.grow.preferences.wifi_country_code.code)
-            read_xml_file = read_xml_file.replace('{PUBLIC_SSH_KEY}',
+            read_xml_file = read_xml_file.replace('[PUBLIC_SSH_KEY]',
                                                   request.grow.preferences.publish_ssh_key_for_authentication)
             if request.grow.preferences.sensor_user_password:
                 generated_user_password = request.grow.preferences.sensor_user_password
         if not generated_user_password:
             generated_user_password = ''.join(
                 secrets.choice(alphabet) for _ in range(10))  # for a 20-character password
-        read_xml_file = read_xml_file.replace('{USER_PASSWORD}', generated_user_password)
+        read_xml_file = read_xml_file.replace('[USER_PASSWORD]', generated_user_password)
         response = HttpResponse(read_xml_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename={}-core.xml'.format(request.grow)
         return response
@@ -229,18 +231,11 @@ def _sensor_update(sensor, update_event):
 @grow_sensor_setup_token_is_valid
 def grows_detail_sensors_detail_setup(request):
     _sensor_update(request.sensor, 'setup_download')
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_gardeno_software.sh')) as executable_file:
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'setup_gardeno_software.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
                                                            request.sensor.identifier)
         read_executable_file = read_executable_file.replace('[SENSOR_URL]', base_sensor_url)
-        read_executable_file = read_executable_file.replace('[STARTED_SETUP_URL]',
-                                                            '{}setup/{}/started/'.format(base_sensor_url,
-                                                                                         request.setup_token.identifier))
-
-        read_executable_file = read_executable_file.replace('[MAIN_EXECUTABLE_DOWNLOAD_URL]',
-                                                            '{}setup/{}/download/'.format(base_sensor_url,
-                                                                                          request.setup_token.identifier))
         read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
                                                             '{}setup/{}/finished/'.format(base_sensor_url,
                                                                                           request.setup_token.identifier))
@@ -256,28 +251,7 @@ def grows_detail_sensors_detail_setup(request):
 
 @csrf_exempt
 @grow_sensor_setup_token_is_valid
-def grows_detail_sensors_detail_setup_started(request):
-    if not request.POST:
-        return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
-    _sensor_update(request.sensor, 'setup_started')
-    return JsonResponse({"success": True})
-
-
-@grow_sensor_setup_token_is_valid
-def grows_detail_sensors_detail_setup_download(request):
-    _sensor_update(request.sensor, 'setup_executable_download')
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'gardeno.py')) as executable_file:
-        read_executable_file = ''.join(executable_file.readlines())
-        response = HttpResponse(read_executable_file, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename=gardeno.py'
-        return response
-
-
-@csrf_exempt
-@grow_sensor_setup_token_is_valid
 def grows_detail_sensors_detail_setup_finished(request):
-    if not request.POST:
-        return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
     _sensor_update(request.sensor, 'setup_finished')
     request.setup_token.sensor.has_been_setup = True
     request.setup_token.sensor.save()
@@ -292,10 +266,10 @@ def grows_detail_sensors_detail_update(request, grow_id=None, sensor_id=None):
     except Exception as exception:
         raise Http404
     _sensor_update(sensor, 'sensor_rebooted')
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'sensor_update.sh')) as executable_file:
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'sensor_update.sh')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, sensor.grow.identifier, sensor.identifier)
-        read_executable_file = read_executable_file.replace('${SENSOR_URL}', '{}'.format(base_sensor_url))
+        read_executable_file = read_executable_file.replace('[SENSOR_URL]', '{}'.format(base_sensor_url))
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=sensor_update.sh'
         return response
@@ -306,7 +280,7 @@ def grows_detail_sensors_detail_executable(request, grow_id=None, sensor_id=None
         sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
     except Exception as exception:
         raise Http404
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'gardeno.py')) as executable_file:
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', 'main.py')) as executable_file:
         read_executable_file = ''.join(executable_file.readlines())
         response = HttpResponse(read_executable_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=gardeno.py'
@@ -318,10 +292,28 @@ def grows_detail_sensors_detail_requirements(request, grow_id=None, sensor_id=No
         sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
     except Exception as exception:
         raise Http404
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'requirements.txt')) as executable_file:
-        read_executable_file = ''.join(executable_file.readlines())
-        response = HttpResponse(read_executable_file, content_type='application/force-download')
+    with open(
+            os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', 'requirements.txt')) as requirements_file:
+        read_requirements_file = ''.join(requirements_file.readlines())
+        response = HttpResponse(read_requirements_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=requirements.txt'
+        return response
+
+
+def grows_detail_sensors_detail_environment(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    device_token = sensor.generate_auth_token()
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', '.env')) as environment_file:
+        read_environment_file = ''.join(environment_file.readlines())
+        read_environment_file = read_environment_file.replace('[SITE_URL]', '{}'.format(settings.SITE_URL))
+        read_environment_file = read_environment_file.replace('[GROW_ID]', '{}'.format(grow_id))
+        read_environment_file = read_environment_file.replace('[SENSOR_ID]', '{}'.format(sensor_id))
+        read_environment_file = read_environment_file.replace('[DEVICE_TOKEN]', '{}'.format(device_token))
+        response = HttpResponse(read_environment_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=.env'
         return response
 
 

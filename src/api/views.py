@@ -2,12 +2,6 @@ from django.http import JsonResponse
 from .decorators import api_decorator, required_fields, authentication_required
 from accounts.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-import jwt
-
-
-def _generate_token_for_user(user):
-    return jwt.encode({"email": user.email}, settings.JWT_SECRET, algorithm='HS256').decode('utf-8')
 
 
 @api_decorator(allowed_methods=['POST'])
@@ -20,7 +14,7 @@ def accounts_sign_in(request):
     if not user or not user.check_password(request.json_body['password']):
         return JsonResponse({"error": "Unable to login, check email/password"}, status=400)
     return JsonResponse({"data": {
-        "token": _generate_token_for_user(user),
+        "token": user.generate_auth_token(),
     }})
 
 
@@ -34,7 +28,7 @@ def accounts_sign_up(request):
     if error:
         return JsonResponse({"error": error}, status=400)
     return JsonResponse({"data": {
-        "token": _generate_token_for_user(user),
+        "token": user.generate_auth_token(),
     }})
 
 

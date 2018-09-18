@@ -10,7 +10,7 @@
         soundElement.innerHTML = '<audio autoplay="autoplay">' + mp3Source + oggSource + embedSource + '</audio>';
     }
 
-    var socket = new ReconnectingWebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/grows/' + GROW_IDENTIFIER + '/', null, {
+    var socket = new ReconnectingWebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/grows/' + GROW_IDENTIFIER + '/?auth_token=' + API_AUTH_TOKEN, null, {
         debug: true,
         reconnectInterval: 3000
     });
@@ -26,10 +26,6 @@
             var message, messageType = 'info', shouldPlaySound = true;
             if (data.data.event === 'setup_download') {
                 message = "Sensor '" + data.data.sensor.name + "' has downloaded setup file.";
-            } else if (data.data.event === 'setup_started') {
-                message = "Sensor '" + data.data.sensor.name + "' has started setup!"
-            } else if (data.data.event === 'setup_executable_download') {
-                message = "Sensor '" + data.data.sensor.name + "' has downloaded the executable script.";
             } else if (data.data.event === 'setup_finished') {
                 message = "Sensor '" + data.data.sensor.name + "' has finished being setup!";
                 messageType = 'success';
