@@ -90,7 +90,7 @@ def on_message(ws, text_message):
             })
         try:
             desired_pin = message['data']['pin']
-            if not output_devices[desired_pin]:
+            if desired_pin not in output_devices or not output_devices[desired_pin] or message['id'] == 'setup_relay':
                 output_devices[desired_pin] = gpiozero.OutputDevice(desired_pin, active_high=False,
                                                                     initial_value=False)
             if message['id'] == 'setup_relay':
@@ -99,7 +99,7 @@ def on_message(ws, text_message):
                 output_devices[desired_pin].on()
                 logging.info('Successfully turned on pin {}'.format(desired_pin))
             elif message['id'] == 'turn_off_relay':
-                output_devices[desired_pin].on()
+                output_devices[desired_pin].off()
                 logging.info('Successfully turned off pin {}'.format(desired_pin))
         except Exception as err:
             logging.error('Unable to perform action on relay: {}'.format(err))
