@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from .models import Grow, Rack, Tray, TrayPosition, Sensor, AWSGreengrassCore, AWSGreengrassGroup, \
-    GrowSensorPreferences, SensorSetupToken, SensorUpdate, SensorAuthenticationToken
+    GrowSensorPreferences, SensorSetupToken, SensorUpdate, SensorAuthenticationToken, SensorRelay
 
 
 class SensorSetupTokenAdmin(admin.ModelAdmin):
@@ -10,6 +10,10 @@ class SensorSetupTokenAdmin(admin.ModelAdmin):
 
 class SensorAuthenticationTokenAdmin(admin.ModelAdmin):
     list_display = ['id', 'date_created', 'date_deactivated', 'sensor', 'date_last_used']
+
+
+class SensorRelayAdmin(admin.ModelAdmin):
+    list_display = ['identifier', 'sensor', 'name', 'pin', 'date_created']
 
 
 admin.site.register(Grow, admin.OSMGeoAdmin)
@@ -23,3 +27,4 @@ admin.site.register(GrowSensorPreferences)
 admin.site.register(SensorSetupToken, SensorSetupTokenAdmin)
 admin.site.register(SensorUpdate)
 admin.site.register(SensorAuthenticationToken, SensorAuthenticationTokenAdmin)
+admin.site.register(SensorRelay, SensorRelayAdmin)

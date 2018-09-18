@@ -51,7 +51,7 @@ def authentication_required():
             authorization_token = authorization_header.split('Bearer ')[-1]
             if not authorization_token:
                 return JsonResponse({"error": 'Expected Authorization header with valid `Bearer X` value'}, status=401)
-            error, user = lookup_auth_token(authorization_token)
+            error, user, _ = lookup_auth_token(authorization_token)
             if error:
                 return JsonResponse({"error": error[1]}, status=error[0])
             request.user = user

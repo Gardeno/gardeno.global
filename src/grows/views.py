@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
+from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SensorUpdate
+    SENSOR_TYPES, SensorUpdate, SensorRelay
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
@@ -315,6 +315,26 @@ def grows_detail_sensors_detail_environment(request, grow_id=None, sensor_id=Non
         response = HttpResponse(read_environment_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=.env'
         return response
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+def grows_detail_sensors_detail_relay_create(request):
+    form = GrowSensorRelayForm()
+    if request.POST:
+        form = GrowSensorRelayForm(request.POST, instance=SensorRelay(sensor=request.sensor,
+                                                                      identifier=uuid.uuid4()))
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    return render(request, 'grows/detail/edit/sensors/relays/create.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "active_view": "sensors",
+        "form": form,
+    })
 
 
 @lookup_grow

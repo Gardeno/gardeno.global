@@ -1,5 +1,5 @@
 from django.forms import models, ValidationError
-from .models import Grow, Sensor, GrowSensorPreferences
+from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay
 from django.forms.widgets import TextInput, CheckboxInput, Select
 from django_countries.widgets import CountrySelectWidget
 from sshpubkeys import SSHKey, InvalidKeyError
@@ -30,6 +30,23 @@ class GrowSensorForm(models.ModelForm):
                 "placeholder": "Enter a memorable name for this sensor"
             }),
             "type": Select(attrs={
+                "required": True
+            }),
+        }
+
+
+class GrowSensorRelayForm(models.ModelForm):
+    class Meta:
+        model = SensorRelay
+        fields = ['name', 'pin']
+        widgets = {
+            "name": TextInput(attrs={
+                "required": True,
+                "placeholder": "Enter a memorable name for this relay"
+            }),
+            "pin": TextInput(attrs={
+                "type": "number",
+                "placeholder": "Enter the GPIO pin this relay is connected to",
                 "required": True
             }),
         }

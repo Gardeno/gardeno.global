@@ -437,6 +437,14 @@ class SensorUpdate(models.Model):
         ordering = ['-date_created']
 
 
+class SensorRelay(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='relays', on_delete=models.CASCADE)
+    identifier = models.UUIDField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    pin = models.IntegerField()
+
+
 class GrowSensorPreferences(BaseModel):
     grow = models.OneToOneField(Grow, related_name='preferences', on_delete=models.CASCADE)
     wifi_network_name = models.CharField(max_length=255, null=True, blank=True)

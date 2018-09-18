@@ -2,6 +2,10 @@ Adafruit-GPIO==1.0.3
 Adafruit-PureIO==0.2.3
 Adafruit-SHT31==1.0.2
 blessings==1.7
+gpiozero==1.4.1
+pigpio==1.40.post1
 python-dotenv==0.9.1
+RPi.GPIO==0.6.3
 six==1.11.0
+spidev==3.2
 websocket-client==0.53.0

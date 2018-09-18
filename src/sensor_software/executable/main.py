@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
-import time
-import logging
 import sys
 import os
 import signal
 from Adafruit_SHT31 import *
 from dotenv import load_dotenv
-from pathlib import Path
 import websocket
+import time
+import logging
+import threading
+import json
+import gpiozero
 
-env_path = Path('.') / '.env'
+env_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
 
 root = logging.getLogger()
@@ -22,6 +24,30 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
+output_devices = {}
+
+
+# Non-blocking interval class
+
+class Interval:
+    def __init__(self, interval, action):
+        self.interval = interval
+        self.action = action
+        self.stopEvent = threading.Event()
+        thread = threading.Thread(target=self.__setInterval)
+        thread.start()
+
+    def __setInterval(self):
+        next_time = time.time() + self.interval
+        while not self.stopEvent.wait(next_time - time.time()):
+            next_time += self.interval
+            self.action()
+
+    def cancel(self):
+        self.stopEvent.set()
+
+
+# Handle exit codes
 
 def signal_handler(sig, frame):
     logging.info('Exiting...')
@@ -31,9 +57,52 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def on_message(ws, message):
+# Full app. Sorry this is all in one file for now
+
+
+def send(ws, message_id, data=None):
+    message = {
+        "id": message_id,
+    }
+    if data:
+        message['data'] = data
+    ws.send(json.dumps(message))
+
+
+def on_message(ws, text_message):
+    try:
+        message = json.loads(text_message)
+    except Exception as err:
+        logging.error('Unable to parse message {}: {}'.format(text_message, err))
+        return
+    if message['id'] == 'pong':
+        return
     logging.info('Received message: {}'.format(message))
     logging.info(message)
+    if message['id'] in ['setup_relay', 'turn_on_relay', 'turn_off_relay']:
+        if not message['data']:
+            return send(ws, 'error', {
+                "message": "Missing message data."
+            })
+        elif not message['data']['pin'] or type(message['data']['pin']) != int:
+            return send(ws, 'error', {
+                "message": "Missing parameter `pin` (integer) in message data"
+            })
+        try:
+            desired_pin = message['data']['pin']
+            if not output_devices[desired_pin]:
+                output_devices[desired_pin] = gpiozero.OutputDevice(desired_pin, active_high=False,
+                                                                    initial_value=False)
+            if message['id'] == 'setup_relay':
+                logging.info('Successfully set up {} as relay'.format(desired_pin))
+            elif message['id'] == 'turn_on_relay':
+                output_devices[desired_pin].on()
+                logging.info('Successfully turned on pin {}'.format(desired_pin))
+            elif message['id'] == 'turn_off_relay':
+                output_devices[desired_pin].on()
+                logging.info('Successfully turned off pin {}'.format(desired_pin))
+        except Exception as err:
+            logging.error('Unable to perform action on relay: {}'.format(err))
 
 
 def on_error(ws, error):
@@ -46,17 +115,12 @@ def on_close(ws):
 
 
 def on_open(ws):
-    '''
-    def run(*args):
-        for i in range(3):
-            time.sleep(1)
-            ws.send("Hello %d" % i)
-        time.sleep(1)
-        ws.close()
-        print("thread terminating...")
-    thread.start_new_thread(run, ())
-    '''
     logging.info('Opened connection...')
+
+    def websocket_keepalive():
+        send(ws, 'ping')
+
+    Interval(20, websocket_keepalive)
 
 
 def main():

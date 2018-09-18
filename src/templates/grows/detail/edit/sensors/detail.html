@@ -25,75 +25,141 @@
 {% endblock %}
 
 {% block subfoot_additional %}
+    <script>
+        var GROW_IDENTIFIER = '{{ grow.identifier }}';
+        var SENSOR_IDENTIFIER = '{{ sensor.identifier }}';
+    </script>
+    <script>
+        $(".relay-action").click(function () {
+            var thisEl = $(this);
+            var action = thisEl.attr('data-action'),
+                identifier = thisEl.attr('data-identifier');
+            var url = '/api/v1/grows/' + GROW_IDENTIFIER + '/sensors/' + SENSOR_IDENTIFIER + '/relays/' + identifier + '/action/' + action + '/';
+            var successMessage;
+            if (action === 'on') {
+                successMessage = 'Successfully turned relay on!';
+            } else if (action === 'off') {
+                successMessage = 'Successfully turned relay off!';
+            }
+            $.ajax({
+                url: url,
+                method: "POST",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", "Bearer " + API_AUTH_TOKEN);
+                },
+                success: function (data) {
+                    toastr["success"](successMessage);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Something went wrong');
+                }
+            });
+        })
+    </script>
 {% endblock %}
 
 {% block subcontent %}
-    <div>
-        <h2>{{ sensor }}</h2>
-    </div>
-    <div id="core-status-container">
-        <ol class="core-instructions">
-            <li>Steps to connect your sensor:</li>
-            <li>1.
-                <a href="https://downloads.raspberrypi.org/raspbian/images/raspbian-2017-03-03/">
-                    Download Raspian 2017-03-02
-                </a>
-            </li>
-            <li>2.
-                Insert the SD card into your computer and run
-                <a href="https://github.com/davidferguson/pibakery/releases">
-                    PiBakery 2.0
-                </a>
-            </li>
-            <li>3.
-                <a href="/grows/{{ grow.identifier }}/sensors/preferences/">
-                    Edit your sensor preferences (WiFi, usernames/passwords, SSH key, etc)
-                </a>
-            </li>
-            <li>4.
-                <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/recipe/">Download your sensor's
-                    PiBakery
-                    recipe</a><br/>
-                <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
-            </li>
-            <li>5. Open the recipe with PiBakery and flash your device</li>
-            <li>6. Boot up your device and wait on this page for updates</li>
-        </ol>
-    </div>
-    <div>
-        <h2>Sensor updates:</h2>
-    </div>
-    <div>
-        <h3 class="no-sensor-updates"{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has not
-            connected to Gardeno yet</h3>
-        <div class="sensor-updates">
-            {% for update in sensor.updates.all %}
-                <div>
-                    {{ update.date_created|naturaltime }} : {{ update.update_object.data.event }}
-                </div>
-            {% endfor %}
+    <div style="clear: both;">
+        <div style="width: 50%; float: left;">
+            <div>
+                <h2>{{ sensor }}</h2>
+            </div>
+            <div id="core-status-container">
+                <ol class="core-instructions">
+                    <li>Steps to connect your sensor:</li>
+                    <li>1.
+                        <a href="https://downloads.raspberrypi.org/raspbian/images/raspbian-2017-03-03/">
+                            Download Raspian 2017-03-02
+                        </a>
+                    </li>
+                    <li>2.
+                        Insert the SD card into your computer and run
+                        <a href="https://github.com/davidferguson/pibakery/releases">
+                            PiBakery 2.0
+                        </a>
+                    </li>
+                    <li>3.
+                        <a href="/grows/{{ grow.identifier }}/sensors/preferences/">
+                            Edit your sensor preferences (WiFi, usernames/passwords, SSH key, etc)
+                        </a>
+                    </li>
+                    <li>4.
+                        <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/recipe/">Download your
+                            sensor's
+                            PiBakery
+                            recipe</a><br/>
+                        <small style="margin-left: 18px;">This recipe will expire in 24 hours</small>
+                    </li>
+                    <li>5. Open the recipe with PiBakery and flash your device</li>
+                    <li>6. Boot up your device and wait on this page for updates</li>
+                </ol>
+            </div>
         </div>
-    </div>
-    <div>
-        <h2>Sensor authentication tokens:</h2>
-    </div>
-    <div>
-        <h3 class="no-sensor-authentication-tokens"{% if sensor.authentication_tokens.count %}
-            style="display: none"{% endif %}>Sensor has no authentication tokens</h3>
-        <div class="sensor-authentication-token-updates">
-            {% for authentication_token in sensor.authentication_tokens.all %}
+        <div style="width: 50%; float: left;">
+            <div>
+                <h2>Sensor relays:</h2>
+            </div>
+            <div>
+                {% if not sensor.relays.count %}
+                    <h3>Sensor has no relays setup</h3>
+                {% else %}
+                    <div>
+                        {% for relay in sensor.relays.all %}
+                            <div>
+                                {{ relay.name }} (created {{ relay.date_created|naturaltime }})
+                                <button class="relay-action" data-action="on" data-identifier="{{ relay.identifier }}">
+                                    On
+                                </button>
+                                <button class="relay-action" data-action="off" data-identifier="{{ relay.identifier }}">
+                                    Off
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <div>
-                    Generated {{ authentication_token.date_created|naturaltime }}
+                    <a href="relays/create/">Add Relay</a>
                 </div>
-                <div>
-                    Last used:
-                    {% if not authentication_token.date_last_used %}
-                        Never
-                    {% else %}
-                        {{ authentication_token.date_last_used|naturaltime }}
-                    {% endif %}
+            </div>
+            <div>
+                <h2>Sensor updates:</h2>
+            </div>
+            <div>
+                <h3 class="no-sensor-updates"{% if sensor.updates.count %} style="display: none"{% endif %}>Sensor has
+                    not
+                    connected to Gardeno yet</h3>
+                <div class="sensor-updates">
+                    {% for update in sensor.updates.all %}
+                        <div>
+                            {{ update.date_created|naturaltime }} : {{ update.update_object.data.event }}
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            </div>
+            <div>
+                <h2>Sensor authentication tokens:</h2>
+            </div>
+            <div>
+                <h3 class="no-sensor-authentication-tokens"{% if sensor.authentication_tokens.count %}
+                    style="display: none"{% endif %}>Sensor has no authentication tokens</h3>
+                <div class="sensor-authentication-token-updates">
+                    {% for authentication_token in sensor.authentication_tokens.all %}
+                        <div>
+                            Generated {{ authentication_token.date_created|naturaltime }}
+                        </div>
+                        <div>
+                            Last used:
+                            {% if not authentication_token.date_last_used %}
+                                Never
+                            {% else %}
+                                {{ authentication_token.date_last_used|naturaltime }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
