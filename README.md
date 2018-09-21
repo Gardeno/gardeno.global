@@ -58,6 +58,7 @@ To install fixtures against a development database
 
 ```
 docker run -it -v $PWD/fixtures:/code/fixtures gardeno.global python3 manage.py loaddata fixtures/users.json
+docker run -it -v $PWD/fixtures:/code/fixtures gardeno.global python3 manage.py loaddata fixtures/grows.json
 ```
 
 To install database migrations against a development database
