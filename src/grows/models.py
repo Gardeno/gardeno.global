@@ -9,6 +9,7 @@ from .greengrass_policy import GREENGRASS_POLICY
 from django_countries.fields import CountryField
 import jwt
 from timezone_field import TimeZoneField
+import requests
 
 VISIBILITY_OPTIONS = [
     {
@@ -378,6 +379,9 @@ class Sensor(BaseModel):
     name = models.CharField(max_length=255, null=True)
     type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
     has_been_setup = models.BooleanField(default=False)
+    vpn_config = models.TextField(null=True, blank=True)
+    vpn_diagnostics = models.TextField(null=True, blank=True)
+
     # AWS specific values
     aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
@@ -394,6 +398,19 @@ class Sensor(BaseModel):
             active_authentication_token = active_authentication_tokens[0]
         return jwt.encode({"sensor_authentication_token_id": active_authentication_token.id}, settings.JWT_SECRET,
                           algorithm='HS256').decode('utf-8')
+
+    def setup_vpn_config(self):
+        result = requests.post(
+            settings.VPN_SECRET_URL,
+            json={
+                "grow_id": str(self.grow.identifier),
+                "client_type": "sensor",
+            }
+        )
+        result_json = result.json()
+        self.vpn_config = result_json['config']
+        self.vpn_diagnostics = json.dumps(result_json['device'])
+        self.save()
 
     def to_json(self):
         return {

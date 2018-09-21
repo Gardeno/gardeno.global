@@ -183,6 +183,7 @@ CHANNEL_LAYERS = {
 ASGI_APPLICATION = "gardeno.routing.application"
 
 JWT_SECRET = os.getenv('JWT_SECRET')
+VPN_SECRET_URL = os.getenv('VPN_SECRET_URL')
 
 if not JWT_SECRET:
     print('Missing `JWT_SECRET` from .env file')

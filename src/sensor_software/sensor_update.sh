@@ -18,6 +18,10 @@ echo "$(date) - Downloading executable from [SENSOR_URL]executable/" >> /home/pi
 sudo -u pi curl "[SENSOR_URL]executable/" --output /home/pi/gardeno/main.py >> /home/pi/setup.log 2>&1
 sudo -u pi chmod +x /home/pi/gardeno/main.py >> /home/pi/setup.log 2>&1
 
+echo "$(date) - Downloading OpenVPN config from [SENSOR_URL]vpn_config/" >> /home/pi/setup.log
+
+sudo -u pi curl "[SENSOR_URL]vpn_config/" --output /home/pi/gardeno/sensor.ovpn >> /home/pi/setup.log 2>&1
+
 echo "$(date) - Installing requirements." >> /home/pi/setup.log
 
 sudo -u pi /home/pi/gardeno/venv/bin/pip install -r /home/pi/gardeno/requirements.txt >> /home/pi/setup.log 2>&1

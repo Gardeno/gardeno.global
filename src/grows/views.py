@@ -179,6 +179,8 @@ def grows_detail_sensors_detail(request):
 @must_own_grow
 @lookup_sensor
 def grows_detail_sensors_detail_recipe(request):
+    if not request.sensor.vpn_config:
+        request.sensor.setup_vpn_config()
     setup_token = SensorSetupToken.objects.create(sensor=request.sensor,
                                                   identifier=uuid.uuid4())
     base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
@@ -315,6 +317,18 @@ def grows_detail_sensors_detail_environment(request, grow_id=None, sensor_id=Non
         response = HttpResponse(read_environment_file, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=.env'
         return response
+
+
+def grows_detail_sensors_detail_vpn_config(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    if not sensor.vpn_config:
+        sensor.setup_vpn_config()
+    response = HttpResponse(sensor.vpn_config, content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename={}.ovpn'.format(sensor.identifier)
+    return response
 
 
 @lookup_grow
