@@ -103,5 +103,5 @@ docker-compose run web rq worker -u redis://redis:6379
 View queues at:
 
 ```
-http://localhost:8001/queues/
+http://localhost:8001/admin/queues/
 ```

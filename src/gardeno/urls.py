@@ -7,7 +7,7 @@ urlpatterns = [
     path('notify', notify),
     path('grows/', include('grows.urls')),
     path('accounts/', include('accounts.urls')),
+    path('admin/queues/', include('django_rq.urls')),
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
-    path('queues/', include('django_rq.urls'))
 ]
