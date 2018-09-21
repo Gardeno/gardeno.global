@@ -8,7 +8,7 @@ apt-get update >> /home/pi/setup.log 2>&1
 
 echo "$(date) - Installing dependencies" >> /home/pi/setup.log
 
-apt-get install -y autossh htop telnet supervisor openvpn >> /home/pi/setup.log 2>&1
+apt-get install -y htop telnet supervisor openvpn >> /home/pi/setup.log 2>&1
 pip install virtualenv >> /home/pi/setup.log 2>&1
 
 mkdir /home/pi/gardeno >> /home/pi/setup.log 2>&1
