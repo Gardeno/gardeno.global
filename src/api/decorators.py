@@ -4,6 +4,7 @@ import json
 import jwt
 from django.conf import settings
 from accounts.models import User
+from api.auth import lookup_auth_token
 
 
 def api_decorator(allowed_methods=None):
@@ -50,16 +51,9 @@ def authentication_required():
             authorization_token = authorization_header.split('Bearer ')[-1]
             if not authorization_token:
                 return JsonResponse({"error": 'Expected Authorization header with valid `Bearer X` value'}, status=401)
-            try:
-                payload = jwt.decode(authorization_token, settings.JWT_SECRET, algorithms=['HS256'])
-            except:
-                return JsonResponse({"error": 'Authorization value is invalid'}, status=401)
-            try:
-                user = User.objects.get(email=payload['email'])
-            except:
-                return JsonResponse({"error": 'User with that email address does not exist'}, status=403)
-            if not user.is_active:
-                return JsonResponse({"error": 'User has been deactivated'}, status=403)
+            error, user, _ = lookup_auth_token(authorization_token)
+            if error:
+                return JsonResponse({"error": error[1]}, status=error[0])
             request.user = user
             return function(request, *args, **kwargs)
 

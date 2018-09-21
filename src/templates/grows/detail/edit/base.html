@@ -54,6 +54,21 @@
 {% endblock %}
 
 {% block foot_additional %}
+
+    <script src="{% static "vendor/reconnecting-websocket/reconnecting-websocket.min.js" %}"></script>
+    <script src="{% static "vendor/toastr/toastr.min.js" %}"></script>
+    <script>
+        var API_AUTH_TOKEN = '{{ user.generate_auth_token }}';
+        var GROW_IDENTIFIER = '{{ grow.identifier  }}';
+        var SOUND_URLS = {
+            success: {
+                mp3: "{% static "sounds/plucky.mp3" %}",
+                ogg: "{% static "sounds/plucky.ogg" %}",
+            }
+        }
+    </script>
+    <script src="{% static "grows/detail/edit/base.js" %}"></script>
+
     {% block subfoot_additional %}{% endblock %}
 {% endblock %}
 

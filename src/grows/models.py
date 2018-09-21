@@ -7,6 +7,9 @@ import logging
 import json
 from .greengrass_policy import GREENGRASS_POLICY
 from django_countries.fields import CountryField
+import jwt
+from timezone_field import TimeZoneField
+import requests
 
 VISIBILITY_OPTIONS = [
     {
@@ -21,6 +24,12 @@ VISIBILITY_OPTIONS = [
 ]
 
 SENSOR_TYPES = [
+    {
+        'value': 'Relay / Switch',
+        'ionicon_name': 'switch',
+        'help_text': 'Uses relay(s) to turn grow components on and off.',
+        'aws_thing_type_name': 'Ambient_Indoor_Grow_Sensor',
+    },
     {
         'value': 'Ambient',
         'ionicon_name': 'thermometer',
@@ -92,7 +101,6 @@ class Grow(BaseModel):
     visibility = models.CharField(max_length=255,
                                   choices=[(x, x) for x in VISIBILITY_OPTION_VALUES],
                                   default='Public')
-
 
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='created_grows')
 
@@ -368,11 +376,113 @@ class Sensor(BaseModel):
     grow = models.ForeignKey(Grow, null=True, related_name='sensors', on_delete=models.CASCADE)
     identifier = models.UUIDField(null=True)
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True)
     type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
+    has_been_setup = models.BooleanField(default=False)
+    vpn_config = models.TextField(null=True, blank=True)
+    vpn_diagnostics = models.TextField(null=True, blank=True)
+
     # AWS specific values
     aws_thing_name = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_arn = models.CharField(max_length=255, null=True, blank=True)
     aws_thing_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.type)
+
+    def generate_auth_token(self):
+        active_authentication_tokens = self.authentication_tokens.filter(date_deactivated__isnull=True)
+        if not active_authentication_tokens:
+            active_authentication_token = SensorAuthenticationToken.objects.create(sensor=self)
+        else:
+            active_authentication_token = active_authentication_tokens[0]
+        return jwt.encode({"sensor_authentication_token_id": active_authentication_token.id}, settings.JWT_SECRET,
+                          algorithm='HS256').decode('utf-8')
+
+    def setup_vpn_config(self):
+        result = requests.post(
+            settings.VPN_SECRET_URL,
+            json={
+                "grow_id": str(self.grow.identifier),
+                "client_type": "sensor",
+            }
+        )
+        result_json = result.json()
+        self.vpn_config = result_json['config']
+        self.vpn_diagnostics = json.dumps(result_json['device'])
+        self.save()
+
+    @property
+    def vpn_diagnostics_object(self):
+        if not self.vpn_diagnostics:
+            return {}
+        return json.loads(self.vpn_diagnostics)
+
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+            "name": self.name,
+        }
+
+
+class SensorSetupToken(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='setup_tokens', on_delete=models.CASCADE)
+    identifier = models.UUIDField()
+    date_last_downloaded = models.DateTimeField(null=True, blank=True)
+    date_finished = models.DateTimeField(null=True, blank=True)
+
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+        }
+
+
+class SensorAuthenticationToken(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_deactivated = models.DateTimeField(null=True, blank=True)
+    sensor = models.ForeignKey(Sensor, related_name='authentication_tokens', on_delete=models.CASCADE)
+    date_last_used = models.DateTimeField(null=True, blank=True)
+
+
+class SensorUpdate(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='updates', on_delete=models.CASCADE)
+    update = models.TextField(null=True)
+
+    @property
+    def update_object(self):
+        return json.loads(self.update)
+
+    def __str__(self):
+        return '{} - {}'.format(self.sensor, self.date_created)
+
+    class Meta:
+        ordering = ['-date_created']
+
+
+class SensorRelay(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='relays', on_delete=models.CASCADE)
+    identifier = models.UUIDField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    pin = models.IntegerField()
+
+    def __str__(self):
+        return '{} - {}'.format(self.sensor, self.name)
+
+
+class RelaySchedule(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    relay = models.ForeignKey(SensorRelay, related_name='schedules', on_delete=models.CASCADE)
+    hour = models.IntegerField()
+    minute = models.IntegerField()
+    timezone = TimeZoneField(null=True)
+    action = models.CharField(max_length=10, null=True, choices=(('On', 'On'), ('Off', 'Off')))
+    job_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return '{} - {}:{} ({}) - {}'.format(self.relay, self.hour, self.minute, self.timezone, self.action)
 
 
 class GrowSensorPreferences(BaseModel):

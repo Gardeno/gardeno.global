@@ -1,0 +1,32 @@
+{% extends "grows/detail/edit/base.html" %}
+
+{% block subhead_additional %}
+    {% include "static_helpers/form.html" %}
+    <style>
+        form label {
+            margin-bottom: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block subcontent %}
+    <h2>Add a Relay to Your Sensor</h2>
+    <div class="form-container">
+        {% if error %}
+            <h4 class="error">{{ error }}</h4>
+        {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
+            <label>
+                Relay Name
+                {{ form.name }}
+            </label>
+            <label>
+                Relay GPIO Pin
+                {{ form.pin }}
+            </label>
+            <div class="break"></div>
+            <button type="submit">Add Relay</button>
+        </form>
+    </div>
+{% endblock %}

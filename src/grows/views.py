@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm
-from .models import Grow, Sensor, GrowSensorPreferences, AWSGreengrassCoreSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SENSOR_AWS_TYPE_LOOKUP
+from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm
+from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
+    SENSOR_TYPES, SensorUpdate, SensorRelay
 import uuid
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse
-from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, grow_aws_setup_token_is_valid
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
+from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
+    grow_sensor_setup_token_is_valid, lookup_relay
 from datetime import datetime, timezone
 from django.conf import settings
 import os
@@ -14,6 +15,7 @@ import string
 from django.views.decorators.csrf import csrf_exempt
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import json
 
 alphabet = string.ascii_letters + string.digits
 
@@ -46,7 +48,8 @@ def grows_create(request):
     if request.POST:
         form = GrowForm(request.POST)
         if form.is_valid():
-            if request.user.created_grows.filter(date_archived__isnull=True).count() >= request.user.grow_limit:
+            if request.user.grow_limit > 0 and request.user.created_grows.filter(
+                    date_archived__isnull=True).count() >= request.user.grow_limit:
                 return HttpResponseRedirect("/grows/exceeded/")
             grow = Grow.objects.create(identifier=uuid.uuid4(),
                                        title=form.data['title'],
@@ -132,118 +135,6 @@ def grows_detail_sensors_preferences(request):
 
 @lookup_grow
 @must_own_grow
-def grows_detail_sensors_core(request):
-    grow_url = '/grows/{}/sensors/'.format(request.grow.identifier)
-    if not request.POST or request.grow.has_created_greengrass_core:
-        return HttpResponseRedirect(grow_url)
-    # TODO : Execute sudo useradd -m USERNAME on tunnel server
-    # Possibly lock port down on said server after giving user access to said port
-    # Generate public / private OpenSSH key
-    # - Store public
-    if not request.grow.create_greengrass_core():
-        return HttpResponseRedirect('{}?error'.format(grow_url))
-    else:
-        return HttpResponseRedirect(grow_url)
-
-
-@lookup_grow
-@must_own_grow
-def grows_detail_sensors_core_recipe(request):
-    if not hasattr(request.grow, 'aws_greengrass_core'):
-        return HttpResponseBadRequest('Need to create a core before generating the recipe.')
-    aws_greengrass_core = request.grow.aws_greengrass_core
-    setup_token = AWSGreengrassCoreSetupToken.objects.create(aws_greengrass_core=aws_greengrass_core,
-                                                             identifier=uuid.uuid4())
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'WithWifi.xml')) as xml_file:
-        read_xml_file = ''.join(xml_file.readlines())
-        read_xml_file = read_xml_file.replace('SENSOR_HOSTNAME',
-                                              'core-{}'.format(aws_greengrass_core.core_id))
-        read_xml_file = read_xml_file.replace('DOWNLOAD_FILE_URL',
-                                              '{}/grows/{}/sensors/core/setup/{}/'.format(settings.SITE_URL,
-                                                                                          request.grow.identifier,
-                                                                                          setup_token.identifier))
-        generated_user_password = None
-        if hasattr(request.grow, 'preferences'):
-            read_xml_file = read_xml_file.replace('NETWORK_NAME', request.grow.preferences.wifi_network_name)
-            read_xml_file = read_xml_file.replace('NETWORK_PASSWORD', request.grow.preferences.wifi_password)
-            read_xml_file = read_xml_file.replace('NETWORK_TYPE', request.grow.preferences.wifi_type)
-            read_xml_file = read_xml_file.replace('NETWORK_ISO_3166_COUNTRY',
-                                                  request.grow.preferences.wifi_country_code.code)
-            read_xml_file = read_xml_file.replace('PUBLIC_SSH_KEY',
-                                                  request.grow.preferences.publish_ssh_key_for_authentication)
-            if request.grow.preferences.sensor_user_password:
-                generated_user_password = request.grow.preferences.sensor_user_password
-        if not generated_user_password:
-            generated_user_password = ''.join(
-                secrets.choice(alphabet) for _ in range(10))  # for a 20-character password
-        read_xml_file = read_xml_file.replace('USER_PASSWORD', generated_user_password)
-        response = HttpResponse(read_xml_file, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename={}-core.xml'.format(request.grow)
-        return response
-
-
-@grow_aws_setup_token_is_valid
-def grows_detail_sensors_core_setup(request):
-    layer = get_channel_layer()
-    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
-        'type': 'sensor_core_update',
-        'update': 'setup_started',
-    })
-    if (datetime.now(timezone.utc) - request.setup_token.date_created).total_seconds() > 60 * 60 * 24:
-        return HttpResponseBadRequest('Setup script has expired')
-    aws_greengrass_core = request.setup_token.aws_greengrass_core
-    with open(os.path.join(settings.BASE_DIR, 'grows_templates', 'setup_greengrass_core.sh')) as executable_file:
-        read_executable_file = ''.join(executable_file.readlines())
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_NAME]',
-                                                            aws_greengrass_core.thing_name)
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ARN]',
-                                                            aws_greengrass_core.thing_name)
-        read_executable_file = read_executable_file.replace('[REPLACE_AWS_CORE_THING_ID]', aws_greengrass_core.thing_id)
-        read_executable_file = read_executable_file.replace('[REPLACE_CERT_PEM]', aws_greengrass_core.certificate_pem)
-        read_executable_file = read_executable_file.replace('[REPLACE_PRIVATE_KEY]',
-                                                            aws_greengrass_core.certificate_keypair_private)
-        read_executable_file = read_executable_file.replace('[REPLACE_PUBLIC_KEY]',
-                                                            aws_greengrass_core.certificate_keypair_public)
-        read_executable_file = read_executable_file.replace('[THING_ARN_HERE]', aws_greengrass_core.thing_arn)
-        read_executable_file = read_executable_file.replace('[AWS_IOT_CUSTOM_ENDPOINT]',
-                                                            settings.AWS_IOT_CUSTOM_ENDPOINT)
-        read_executable_file = read_executable_file.replace('[AWS_REGION_HERE]', settings.AWS_DEFAULT_REGION)
-        read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
-                                                            '{}/grows/{}/sensors/core/setup/{}/finished/'.format(
-                                                                settings.SITE_URL,
-                                                                request.grow.identifier,
-                                                                request.setup_token.identifier))
-        response = HttpResponse(read_executable_file, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename={}-greengrass_setup.sh'.format(request.grow)
-        request.setup_token.date_last_downloaded = datetime.now(timezone.utc)
-        request.setup_token.save()
-        return response
-
-
-@csrf_exempt
-@grow_aws_setup_token_is_valid
-def grows_detail_sensors_core_setup_finished(request):
-    layer = get_channel_layer()
-    async_to_sync(layer.group_send)('grow-{}'.format(request.grow.identifier), {
-        'type': 'sensor_core_update',
-        'update': 'setup_finished',
-    })
-    '''
-    Instead of polling AWS for every core sensor to determine if the connection was successful,
-    we're POSTing with the setup script to this URL as x
-    '''
-    request.setup_token.aws_greengrass_core.has_been_setup = True
-    request.setup_token.aws_greengrass_core.save()
-    request.setup_token.date_finished = datetime.now(timezone.utc)
-    request.setup_token.save()
-    if not request.POST:
-        # return JsonResponse({"error": 'Only POSTing to this endpoint is allowed.'}, status=405)
-        pass
-    return JsonResponse({"success": True})
-
-
-@lookup_grow
-@must_own_grow
 @must_have_created_core
 def grows_detail_sensors_create(request):
     initial_type = request.GET.get('type', 'Ambient')
@@ -252,28 +143,13 @@ def grows_detail_sensors_create(request):
         'type': initial_type,
     })
     if request.POST:
-        form = GrowSensorForm(request.POST)
+        form = GrowSensorForm(request.POST, instance=Sensor(grow=request.grow,
+                                                            identifier=uuid.uuid4(),
+                                                            created_by_user=request.user))
         if form.is_valid():
-            sensor_type = form.data['type']
-            sensor = Sensor.objects.create(grow=request.grow,
-                                           identifier=uuid.uuid4(),
-                                           created_by_user=request.user,
-                                           type=sensor_type)
-            response = settings.IOT_CLIENT.create_thing(
-                thingName='{}__{}'.format(request.grow.identifier, sensor.identifier),
-                thingTypeName=SENSOR_AWS_TYPE_LOOKUP[sensor_type],
-                attributePayload={
-                    'attributes': {
-                        'grow_id': '{}'.format(request.grow.identifier),
-                        'sensor_id': '{}'.format(sensor.identifier),
-                    }
-                }
-            )
-            sensor.aws_thing_name = response['thingName']
-            sensor.aws_thing_arn = response['thingArn']
-            sensor.aws_thing_id = response['thingId']
-            sensor.save()
-            return HttpResponseRedirect("/grows/{}/sensors/{}/".format(request.grow.identifier, sensor.identifier))
+            form.save()
+            return HttpResponseRedirect(
+                "/grows/{}/sensors/{}/".format(request.grow.identifier, form.instance.identifier))
         else:
             error = 'Form is invalid'
     return render(request, 'grows/detail/edit/sensors/create.html', {
@@ -289,7 +165,6 @@ def grows_detail_sensors_create(request):
 @lookup_grow
 @must_own_grow
 @lookup_sensor
-@must_have_created_core
 def grows_detail_sensors_detail(request):
     template = 'grows/detail/edit/sensors/detail.html' if request.grow.is_owned_by_user(
         request.user) else 'grows/detail/view/sensors/detail.html'
@@ -297,6 +172,202 @@ def grows_detail_sensors_detail(request):
         "grow": request.grow,
         "sensor": request.sensor,
         "active_view": "sensors",
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+def grows_detail_sensors_detail_recipe(request):
+    if not request.sensor.vpn_config:
+        request.sensor.setup_vpn_config()
+    setup_token = SensorSetupToken.objects.create(sensor=request.sensor,
+                                                  identifier=uuid.uuid4())
+    base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
+                                                       request.sensor.identifier)
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'BaseRaspberryPiRecipe.xml')) as xml_file:
+        read_xml_file = ''.join(xml_file.readlines())
+        read_xml_file = read_xml_file.replace('[SENSOR_HOSTNAME]',
+                                              'sensor-{}'.format(request.sensor.identifier))
+        read_xml_file = read_xml_file.replace('[DOWNLOAD_FILE_URL]',
+                                              '{}setup/{}/'.format(base_sensor_url, setup_token.identifier))
+        read_xml_file = read_xml_file.replace('[STARTED_SETUP_URL]',
+                                              '{}setup/{}/started/'.format(base_sensor_url,
+                                                                           setup_token.identifier))
+        generated_user_password = None
+        if hasattr(request.grow, 'preferences'):
+            read_xml_file = read_xml_file.replace('[NETWORK_NAME]', request.grow.preferences.wifi_network_name)
+            read_xml_file = read_xml_file.replace('[NETWORK_PASSWORD]', request.grow.preferences.wifi_password)
+            read_xml_file = read_xml_file.replace('[NETWORK_TYPE]', request.grow.preferences.wifi_type)
+            read_xml_file = read_xml_file.replace('[NETWORK_ISO_3166_COUNTRY]',
+                                                  request.grow.preferences.wifi_country_code.code)
+            read_xml_file = read_xml_file.replace('[PUBLIC_SSH_KEY]',
+                                                  request.grow.preferences.publish_ssh_key_for_authentication)
+            if request.grow.preferences.sensor_user_password:
+                generated_user_password = request.grow.preferences.sensor_user_password
+        if not generated_user_password:
+            generated_user_password = ''.join(
+                secrets.choice(alphabet) for _ in range(10))  # for a 20-character password
+        read_xml_file = read_xml_file.replace('[USER_PASSWORD]', generated_user_password)
+        response = HttpResponse(read_xml_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename={}-core.xml'.format(request.grow)
+        return response
+
+
+def _sensor_update(sensor, update_event):
+    message = {
+        'type': 'sensor_update',
+        'data': {
+            'event': update_event,
+            'sensor': sensor.to_json(),
+        }
+    }
+    SensorUpdate.objects.create(
+        sensor=sensor,
+        update=json.dumps(message),
+    )
+    layer = get_channel_layer()
+    async_to_sync(layer.group_send)('grow-{}'.format(sensor.grow.identifier), message)
+
+
+@grow_sensor_setup_token_is_valid
+def grows_detail_sensors_detail_setup(request):
+    _sensor_update(request.sensor, 'setup_download')
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'setup_gardeno_software.sh')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, request.grow.identifier,
+                                                           request.sensor.identifier)
+        read_executable_file = read_executable_file.replace('[SENSOR_URL]', base_sensor_url)
+        read_executable_file = read_executable_file.replace('[FINISHED_SETUP_URL]',
+                                                            '{}setup/{}/finished/'.format(base_sensor_url,
+                                                                                          request.setup_token.identifier))
+
+        read_executable_file = read_executable_file.replace('[UPDATE_URL]',
+                                                            '{}update/'.format(base_sensor_url))
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename={}-setup_gardeno_software.sh'.format(request.grow)
+        request.setup_token.date_last_downloaded = datetime.now(timezone.utc)
+        request.setup_token.save()
+        return response
+
+
+@csrf_exempt
+@grow_sensor_setup_token_is_valid
+def grows_detail_sensors_detail_setup_finished(request):
+    _sensor_update(request.sensor, 'setup_finished')
+    request.setup_token.sensor.has_been_setup = True
+    request.setup_token.sensor.save()
+    request.setup_token.date_finished = datetime.now(timezone.utc)
+    request.setup_token.save()
+    return JsonResponse({"success": True})
+
+
+def grows_detail_sensors_detail_update(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    _sensor_update(sensor, 'sensor_rebooted')
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'sensor_update.sh')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        base_sensor_url = '{}/grows/{}/sensors/{}/'.format(settings.SITE_URL, sensor.grow.identifier, sensor.identifier)
+        read_executable_file = read_executable_file.replace('[SENSOR_URL]', '{}'.format(base_sensor_url))
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=sensor_update.sh'
+        return response
+
+
+def grows_detail_sensors_detail_executable(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', 'main.py')) as executable_file:
+        read_executable_file = ''.join(executable_file.readlines())
+        response = HttpResponse(read_executable_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=gardeno.py'
+        return response
+
+
+def grows_detail_sensors_detail_requirements(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    with open(
+            os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', 'requirements.txt')) as requirements_file:
+        read_requirements_file = ''.join(requirements_file.readlines())
+        response = HttpResponse(read_requirements_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=requirements.txt'
+        return response
+
+
+def grows_detail_sensors_detail_environment(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    device_token = sensor.generate_auth_token()
+    with open(os.path.join(settings.BASE_DIR, 'sensor_software', 'executable', '.env')) as environment_file:
+        read_environment_file = ''.join(environment_file.readlines())
+        read_environment_file = read_environment_file.replace('[SITE_URL]', '{}'.format(settings.SITE_URL))
+        read_environment_file = read_environment_file.replace('[GROW_ID]', '{}'.format(grow_id))
+        read_environment_file = read_environment_file.replace('[SENSOR_ID]', '{}'.format(sensor_id))
+        read_environment_file = read_environment_file.replace('[DEVICE_TOKEN]', '{}'.format(device_token))
+        response = HttpResponse(read_environment_file, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=.env'
+        return response
+
+
+def grows_detail_sensors_detail_vpn_config(request, grow_id=None, sensor_id=None):
+    try:
+        sensor = Sensor.objects.get(grow__identifier=grow_id, identifier=sensor_id)
+    except Exception as exception:
+        raise Http404
+    if not sensor.vpn_config:
+        sensor.setup_vpn_config()
+    response = HttpResponse(sensor.vpn_config, content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename={}.ovpn'.format(sensor.identifier)
+    return response
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+def grows_detail_sensors_detail_relay_create(request):
+    form = GrowSensorRelayForm()
+    if request.POST:
+        form = GrowSensorRelayForm(request.POST, instance=SensorRelay(sensor=request.sensor,
+                                                                      identifier=uuid.uuid4()))
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    return render(request, 'grows/detail/edit/sensors/relays/create.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "active_view": "sensors",
+        "form": form,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+@lookup_relay
+def grows_detail_sensors_detail_relay_detail(request):
+    form = GrowSensorRelayForm(instance=request.relay)
+    if request.POST:
+        form = GrowSensorRelayForm(request.POST, instance=request.relay)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    return render(request, 'grows/detail/edit/sensors/relays/detail.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "active_view": "sensors",
+        "form": form,
     })
 
 

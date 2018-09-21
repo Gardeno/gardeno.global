@@ -155,9 +155,14 @@
 </div>
 
 <link href="{% static "css/milligram.min.css" %}" rel="stylesheet">
+<link href="{% static "vendor/toastr/toastr.min.css" %}" rel="stylesheet">
 <script src="https://unpkg.com/ionicons@4.2.4/dist/ionicons.js"></script>
 
+<script src="{% static "vendor/jquery/jquery-3.3.1.min.js" %}"></script>
+
 {% block foot_additional %}{% endblock %}
+
+<div id="sound_wrapper"></div>
 
 </body>
 </html>

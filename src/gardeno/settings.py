@@ -19,7 +19,6 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 import os
-import raven
 import boto3
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -46,6 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.humanize',
     'django_countries',
+    'timezone_field',
+    "django_rq",
     'channels',
     'accounts',
     'grows',
@@ -168,11 +169,13 @@ SITE_URL = os.getenv('SITE_URL')
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 AWS_IOT_CUSTOM_ENDPOINT = os.getenv('AWS_IOT_CUSTOM_ENDPOINT')
 
+REDIS_HOST = os.getenv('REDIS_HOST')
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(os.getenv('REDIS_HOST'), 6379)],
+            "hosts": [(REDIS_HOST, 6379)],
         },
     },
 }
@@ -180,6 +183,36 @@ CHANNEL_LAYERS = {
 ASGI_APPLICATION = "gardeno.routing.application"
 
 JWT_SECRET = os.getenv('JWT_SECRET')
+VPN_SECRET_URL = os.getenv('VPN_SECRET_URL')
 
 if not JWT_SECRET:
     print('Missing `JWT_SECRET` from .env file')
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': REDIS_HOST,
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    },
+}
+
+# from datetime import timedelta
+
+'''
+denver_timezone = timezone('America/Denver')
+result = denver_timezone.localize(datetime(2018, 9, 20, 17, 30, 0))
+print('Denver: {}'.format(result))
+utc_result = result.astimezone(timezone('UTC'))
+print('UTC: {}'.format(utc_result))
+
+
+def job():
+    print('Here...')
+
+print(scheduler.enqueue_in(timedelta(seconds=1), job, 'foo'))
+
+job = scheduler.enqueue_at(utc_result, job, 'arg', bar='baz')
+print(job)
+
+'''
