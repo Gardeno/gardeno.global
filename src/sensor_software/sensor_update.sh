@@ -20,7 +20,7 @@ sudo -u pi chmod +x /home/pi/gardeno/main.py >> /home/pi/setup.log 2>&1
 
 echo "$(date) - Downloading OpenVPN config from [SENSOR_URL]vpn_config/" >> /home/pi/setup.log
 
-sudo -u pi curl "[SENSOR_URL]vpn_config/" --output /home/pi/gardeno/sensor.ovpn >> /home/pi/setup.log 2>&1
+curl "[SENSOR_URL]vpn_config/" --output /etc/openvpn/gardeno.conf >> /home/pi/setup.log 2>&1
 
 echo "$(date) - Installing requirements." >> /home/pi/setup.log
 

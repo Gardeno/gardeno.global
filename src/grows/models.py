@@ -412,6 +412,12 @@ class Sensor(BaseModel):
         self.vpn_diagnostics = json.dumps(result_json['device'])
         self.save()
 
+    @property
+    def vpn_diagnostics_object(self):
+        if not self.vpn_diagnostics:
+            return {}
+        return json.loads(self.vpn_diagnostics)
+
     def to_json(self):
         return {
             "identifier": str(self.identifier),

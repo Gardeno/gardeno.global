@@ -108,7 +108,8 @@
                     <div>
                         {% for relay in sensor.relays.all %}
                             <div>
-                                <a href="relays/{{ relay.identifier }}/">{{ relay.name }} (created {{ relay.date_created|naturaltime }})</a>
+                                <a href="relays/{{ relay.identifier }}/">{{ relay.name }}
+                                    (created {{ relay.date_created|naturaltime }})</a>
                                 <button class="relay-action" data-action="on" data-identifier="{{ relay.identifier }}">
                                     On
                                 </button>
@@ -123,6 +124,12 @@
                     <a href="relays/create/">Add Relay</a>
                 </div>
             </div>
+            {% if sensor.vpn_config %}
+                <div>
+                    <h2>VPN has been configured!</h2>
+                    <h3>IP Address: {{ sensor.vpn_diagnostics_object.ip_address }}</h3>
+                </div>
+            {% endif %}
             <div>
                 <h2>Sensor updates:</h2>
             </div>
