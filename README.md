@@ -99,3 +99,9 @@ Run `rq worker` to execute the jobs:
 ```
 docker-compose run web rq worker -u redis://redis:6379
 ```
+
+View queues at:
+
+```
+http://localhost:8001/queues/
+```
