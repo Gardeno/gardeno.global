@@ -1,4 +1,4 @@
-from .models import Grow, Sensor, SensorSetupToken
+from .models import Grow, Sensor, SensorSetupToken, SensorRelay
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from datetime import datetime, timezone
 
@@ -12,7 +12,7 @@ def lookup_grow(function):
             raise Http404
         request.grow = grow
         if not request.grow.is_owned_by_user(request.user) and (
-            not grow.date_published or grow.visibility == 'Private'):
+                    not grow.date_published or grow.visibility == 'Private'):
             raise Http404
         return function(request, *args, **kwargs)
 
@@ -42,6 +42,23 @@ def lookup_sensor(function):
         except Exception as exception:
             raise Http404
         request.sensor = sensor
+        return function(request, *args, **kwargs)
+
+    wrap.__doc__ = function.__doc__
+    wrap.__name__ = function.__name__
+
+    return wrap
+
+
+def lookup_relay(function):
+    def wrap(request, *args, **kwargs):
+        relay_id = kwargs.pop('relay_id')
+        try:
+            relay = SensorRelay.objects.get(sensor=request.sensor, identifier=relay_id)
+        except Exception as exception:
+            print(exception)
+            raise Http404
+        request.relay = relay
         return function(request, *args, **kwargs)
 
     wrap.__doc__ = function.__doc__

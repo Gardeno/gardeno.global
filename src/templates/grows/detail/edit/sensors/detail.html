@@ -108,7 +108,7 @@
                     <div>
                         {% for relay in sensor.relays.all %}
                             <div>
-                                {{ relay.name }} (created {{ relay.date_created|naturaltime }})
+                                <a href="relays/{{ relay.identifier }}/">{{ relay.name }} (created {{ relay.date_created|naturaltime }})</a>
                                 <button class="relay-action" data-action="on" data-identifier="{{ relay.identifier }}">
                                     On
                                 </button>

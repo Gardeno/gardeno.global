@@ -9,4 +9,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
+    path('queues/', include('django_rq.urls'))
 ]

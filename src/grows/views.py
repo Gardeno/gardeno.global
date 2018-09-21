@@ -6,7 +6,7 @@ from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIB
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
-    grow_sensor_setup_token_is_valid
+    grow_sensor_setup_token_is_valid, lookup_relay
 from datetime import datetime, timezone
 from django.conf import settings
 import os
@@ -330,6 +330,26 @@ def grows_detail_sensors_detail_relay_create(request):
             return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
                                                                        request.sensor.identifier))
     return render(request, 'grows/detail/edit/sensors/relays/create.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "active_view": "sensors",
+        "form": form,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+@lookup_relay
+def grows_detail_sensors_detail_relay_detail(request):
+    form = GrowSensorRelayForm(instance=request.relay)
+    if request.POST:
+        form = GrowSensorRelayForm(request.POST, instance=request.relay)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    return render(request, 'grows/detail/edit/sensors/relays/detail.html', {
         "grow": request.grow,
         "sensor": request.sensor,
         "active_view": "sensors",

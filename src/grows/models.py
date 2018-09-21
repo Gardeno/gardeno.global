@@ -8,6 +8,7 @@ import json
 from .greengrass_policy import GREENGRASS_POLICY
 from django_countries.fields import CountryField
 import jwt
+from timezone_field import TimeZoneField
 
 VISIBILITY_OPTIONS = [
     {
@@ -443,6 +444,22 @@ class SensorRelay(models.Model):
     identifier = models.UUIDField(null=True)
     name = models.CharField(max_length=255, null=True)
     pin = models.IntegerField()
+
+    def __str__(self):
+        return '{} - {}'.format(self.sensor, self.name)
+
+
+class RelaySchedule(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    relay = models.ForeignKey(SensorRelay, related_name='schedules', on_delete=models.CASCADE)
+    hour = models.IntegerField()
+    minute = models.IntegerField()
+    timezone = TimeZoneField(null=True)
+    action = models.CharField(max_length=10, null=True, choices=(('On', 'On'), ('Off', 'Off')))
+    job_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return '{} - {}:{} ({}) - {}'.format(self.relay, self.hour, self.minute, self.timezone, self.action)
 
 
 class GrowSensorPreferences(BaseModel):

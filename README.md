@@ -85,3 +85,17 @@ Light Green
 
 Dark Green
 #2c3c44
+
+# Running the scheduler
+
+Run `rq-scheduler` to make sure jobs get in the queue:
+
+```
+docker-compose run web rqscheduler --host redis -i 5
+```
+
+Run `rq worker` to execute the jobs:
+
+```
+docker-compose run web rq worker -u redis://redis:6379
+```
