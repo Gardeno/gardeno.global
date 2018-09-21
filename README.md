@@ -18,6 +18,7 @@ docker-compose run web python3 manage.py migrate
 docker-compose run web python3 manage.py loaddata /fixtures/users.json
 docker-compose run web python3 manage.py loaddata /fixtures/safety.json
 docker-compose run web python3 manage.py loaddata /fixtures/launch_signups.json
+docker-compose run web python3 manage.py loaddata /fixtures/grows.json
 ```
 
 # Some important commands (locally)

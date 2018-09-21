@@ -1,5 +1,7 @@
 import django
 import os
+from datetime import datetime, timedelta
+from pytz import timezone
 
 
 def _setup():
@@ -9,8 +11,14 @@ def _setup():
 
 def execute_relay_schedule(relay_schedule_id, **kwargs):
     _setup()
-    from grows.models import RelaySchedule
-    print('Executing!')
-    relay_schedule = RelaySchedule.objects.get(id=relay_schedule_id)
-    print('Running schedule: {}'.format(relay_schedule))
-    print('Kwargs: {}'.format(kwargs))
+    from grows.models import RelayScheduleItem
+    relay_schedule_item = RelayScheduleItem.objects.get(id=relay_schedule_id)
+    try:
+        relay_schedule_item.date_completed = datetime.now(timezone('UTC'))
+    except Exception as error:
+        relay_schedule_item.failure_text = str(error)
+        relay_schedule_item.date_failed = datetime.now(timezone('UTC'))
+    relay_schedule_item.save()
+    # Schedule the next run
+    next_runtime_utc = relay_schedule_item.relay_schedule.calculate_next_runtime_utc(relay_schedule_item.date_scheduled)
+    relay_schedule_item.relay_schedule.enqueue_item_at(next_runtime_utc)

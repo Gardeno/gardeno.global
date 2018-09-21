@@ -10,6 +10,12 @@ from django_countries.fields import CountryField
 import jwt
 from timezone_field import TimeZoneField
 import requests
+from datetime import datetime, timedelta
+from pytz import timezone
+from redis import Redis
+from rq import Queue
+from rq_scheduler import Scheduler
+from grows.jobs import execute_relay_schedule
 
 VISIBILITY_OPTIONS = [
     {
@@ -477,12 +483,79 @@ class RelaySchedule(models.Model):
     relay = models.ForeignKey(SensorRelay, related_name='schedules', on_delete=models.CASCADE)
     hour = models.IntegerField()
     minute = models.IntegerField()
+    second = models.IntegerField(default=0)
     timezone = TimeZoneField(null=True)
     action = models.CharField(max_length=10, null=True, choices=(('On', 'On'), ('Off', 'Off')))
-    job_id = models.CharField(max_length=255, null=True, blank=True)
+    is_enabled = models.BooleanField(default=True)
+
+    def calculate_next_runtime_utc(self, last_scheduled_datetime_utc=None):
+        if not last_scheduled_datetime_utc:
+            local_time_now = datetime.now(self.timezone)
+            first_execution_time = datetime(local_time_now.year, local_time_now.month, local_time_now.day,
+                                            self.hour, self.minute, self.second,
+                                            tzinfo=local_time_now.tzinfo)
+            if first_execution_time < local_time_now:
+                first_execution_time = first_execution_time + timedelta(hours=24)
+            return first_execution_time.astimezone(timezone('UTC'))
+        else:
+            last_scheduled_datetime_local = last_scheduled_datetime_utc.astimezone(self.timezone)
+            next_execution_time_utc = last_scheduled_datetime_utc + timedelta(days=1)
+            print('Next execution time UTC: {}'.format(next_execution_time_utc))
+            next_execution_time_local = next_execution_time_utc.astimezone(self.timezone)
+            print('Next execution time local: {}'.format(next_execution_time_local))
+            if last_scheduled_datetime_local.hour > next_execution_time_local.hour:
+                # If we have a relay schedule item that was scheduled for 11pm on 2018-11-03
+                # in the America/Denver timezone then +24 hours will be 10pm on 2018-11-03
+                # We are therefore falling back an hour and need to add 1 hour to the
+                # desired execution time.
+                next_execution_time_local = next_execution_time_local + timedelta(hours=1)
+            elif last_scheduled_datetime_local.hour < next_execution_time_local.hour:
+                # Same deal, only we are springing forward so we need to subtract an hour
+                # from the desired execution time.
+                next_execution_time_local = next_execution_time_local - timedelta(hours=1)
+            return next_execution_time_local.astimezone(timezone('UTC'))
+
+    def enqueue_item_at(self, date_scheduled_utc=None, is_new_schedule=False):
+        utc_time_now = datetime.now(timezone('UTC'))
+        # First, cancel all existing jobs for this relay because we re-create the schedule
+        scheduler = Scheduler(connection=Redis(host=settings.REDIS_HOST, port=6379))
+        schedule_items_to_cancel = self.schedule_items.filter(job_id__isnull=False, date_cancelled__isnull=True,
+                                                              date_completed__isnull=True, date_failed__isnull=True)
+        print('cancelling... {}'.format(schedule_items_to_cancel))
+        for schedule_item_to_cancel in schedule_items_to_cancel:
+            if schedule_item_to_cancel.job_id in scheduler:
+                scheduler.cancel(schedule_item_to_cancel.job_id)
+            schedule_item_to_cancel.date_cancelled = utc_time_now
+            schedule_item_to_cancel.save()
+        # If the relay gets disabled then we return, and because we cancel the schedule items above we are all done
+        if not self.is_enabled:
+            return
+        # Now we create the scheduled job and add a database entry
+        relay_schedule_item = RelayScheduleItem.objects.create(relay_schedule=self,
+                                                               is_new_schedule=is_new_schedule,
+                                                               date_scheduled=date_scheduled_utc)
+        scheduled_job = scheduler.enqueue_at(date_scheduled_utc, execute_relay_schedule, relay_schedule_item.id)
+        relay_schedule_item.job_id = scheduled_job.id
+        relay_schedule_item.save()
 
     def __str__(self):
         return '{} - {}:{} ({}) - {}'.format(self.relay, self.hour, self.minute, self.timezone, self.action)
+
+
+class RelayScheduleItem(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    relay_schedule = models.ForeignKey(RelaySchedule, related_name='schedule_items', on_delete=models.CASCADE)
+    is_new_schedule = models.BooleanField(default=False,
+                                          help_text='If checked, this item began a new schedule for the relay.')
+    date_scheduled = models.DateTimeField(null=True)
+    job_id = models.UUIDField(null=True)
+    date_cancelled = models.DateTimeField(null=True, blank=True)
+    date_completed = models.DateTimeField(null=True, blank=True)
+    date_failed = models.DateTimeField(null=True, blank=True)
+    failure_text = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date_created']
 
 
 class GrowSensorPreferences(BaseModel):
