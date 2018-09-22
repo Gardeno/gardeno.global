@@ -197,22 +197,26 @@ RQ_QUEUES = {
     },
 }
 
-# from datetime import timedelta
-
-'''
-denver_timezone = timezone('America/Denver')
-result = denver_timezone.localize(datetime(2018, 9, 20, 17, 30, 0))
-print('Denver: {}'.format(result))
-utc_result = result.astimezone(timezone('UTC'))
-print('UTC: {}'.format(utc_result))
-
-
-def job():
-    print('Here...')
-
-print(scheduler.enqueue_in(timedelta(seconds=1), job, 'foo'))
-
-job = scheduler.enqueue_at(utc_result, job, 'arg', bar='baz')
-print(job)
-
-'''
+TIME_INPUT_FORMATS = [
+    # Hour, Minute, Second, AM/PM
+    '%-I:%M:%S %p',
+    '%I:%M:%S %p',
+    '%-I:%M:%S%p',
+    '%I:%M:%S%p',
+    # Hour, Minute, AM/PM
+    '%-I:%M %p',
+    '%I:%M %p',
+    '%-I:%M%p',
+    '%I:%M%p',
+    # Hour, AM/PM
+    '%-I %p',
+    '%I %p',
+    '%-I%p',
+    '%I%p',
+    # 24 Hour, Minute, Second
+    '%H:%M:%S',
+    '%-H:%M:%S',
+    # 24 Hour, Minute
+    '%H:%M',
+    '%-H:%M',
+]

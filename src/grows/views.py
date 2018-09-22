@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm, GrowSensorRelayScheduleForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SensorUpdate, SensorRelay
+    SENSOR_TYPES, SensorUpdate, SensorRelay, RelaySchedule
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, grow_sensor_setup_token_is_valid, lookup_relay
@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
+from datetime import time
 
 alphabet = string.ascii_letters + string.digits
 
@@ -363,18 +364,24 @@ def grows_detail_sensors_detail_relay_schedule_detail(request, schedule_id=None)
             schedule_item = request.relay.schedules.get(id=schedule_id)
         except:
             raise Http404
-    form = GrowSensorRelayScheduleForm()
-    '''
-    if schedule_id:
-
-    form = GrowSensorRelayForm(instance=request.relay)
+    form = GrowSensorRelayScheduleForm(initial={
+        "execution_time": time(schedule_item.hour, schedule_item.minute,
+                               schedule_item.second) if schedule_item else None,
+        "is_enabled": schedule_item.is_enabled if schedule_item else True
+    })
     if request.POST:
-        form = GrowSensorRelayForm(request.POST, instance=request.relay)
+        form = GrowSensorRelayScheduleForm(request.POST)
         if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
-                                                                       request.sensor.identifier))
-    '''
+            if not schedule_item:
+                schedule_item = RelaySchedule(relay=request.relay)
+            schedule_item.hour = form.cleaned_data['execution_time'].hour
+            schedule_item.minute = form.cleaned_data['execution_time'].minute
+            schedule_item.second = form.cleaned_data['execution_time'].second
+            schedule_item.action = form.cleaned_data['action']
+            schedule_item.is_enabled = form.cleaned_data['is_enabled']
+            schedule_item.save()
+            return HttpResponseRedirect('../../')
+
     return render(request, 'grows/detail/edit/sensors/relays/schedules/detail.html', {
         "grow": request.grow,
         "sensor": request.sensor,

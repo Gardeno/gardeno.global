@@ -309,14 +309,17 @@ class RelaySchedule(models.Model):
 
     @property
     def last_run_time(self):
-        items = self.schedule_items.filter(date_scheduled__lte=datetime.now(timezone('UTC')))
+        items = self.schedule_items.filter(date_scheduled__lte=datetime.now(timezone('UTC')),
+                                           date_cancelled__isnull=True)
         if items:
             return items[0].date_scheduled
         return None
 
     @property
     def next_run_time(self):
-        items = self.schedule_items.filter(date_scheduled__gt=datetime.now(timezone('UTC')))
+        items = self.schedule_items.filter(date_scheduled__gt=datetime.now(timezone('UTC')),
+                                           date_cancelled__isnull=True, date_completed__isnull=True,
+                                           date_failed__isnull=True)
         if items:
             return items[0].date_scheduled
         return None

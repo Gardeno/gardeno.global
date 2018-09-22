@@ -8,9 +8,8 @@
 
 {% block foot_additional %}
     <script>
-        var guessedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (guessedTimezone) {
-            document.getElementById('id_timezone').value = guessedTimezone
+        if (USER_TIMEZONE) {
+            document.getElementById('id_timezone').value = USER_TIMEZONE
         }
     </script>
 {% endblock %}

@@ -74,14 +74,14 @@
                                 <td>{{ schedule.is_enabled|yesno:"Yes,No" }}</td>
                                 <td>
                                     {% if schedule.last_run_time %}
-                                        {{ schedule.last_run_time|naturaltime }}
+                                        <span title="{{ schedule.last_run_time }}">{{ schedule.last_run_time|naturaltime }}</span>
                                     {% else %}
                                         Never
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if schedule.next_run_time %}
-                                        {{ schedule.next_run_time|naturaltime }}
+                                        <span title="{{ schedule.next_run_time }}">{{ schedule.next_run_time|naturaltime }}</span>
                                     {% else %}
                                         Not scheduled
                                     {% endif %}

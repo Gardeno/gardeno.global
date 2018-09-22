@@ -1,4 +1,4 @@
-from django.forms import models, ValidationError, TypedChoiceField, Form, CharField
+from django import forms
 from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, RelaySchedule
 from django.forms.widgets import TextInput, CheckboxInput, Select, TimeInput
 from django_countries.widgets import CountrySelectWidget
@@ -7,14 +7,14 @@ import pytz
 from datetime import datetime
 
 
-class TimeZoneFormField(TypedChoiceField):
+class TimeZoneFormField(forms.TypedChoiceField):
     def __init__(self, *args, **kwargs):
 
         def coerce_to_pytz(val):
             try:
                 return pytz.timezone(val)
             except pytz.UnknownTimeZoneError:
-                raise ValidationError("Unknown time zone: '%s'" % val)
+                raise forms.ValidationError("Unknown time zone: '%s'" % val)
 
         def build_timezones():
             yield (None, '---Choose the grow\'s timezone---')
@@ -32,7 +32,7 @@ class TimeZoneFormField(TypedChoiceField):
         super(TimeZoneFormField, self).__init__(*args, **defaults)
 
 
-class GrowForm(models.ModelForm):
+class GrowForm(forms.models.ModelForm):
     timezone = TimeZoneFormField()
 
     class Meta:
@@ -50,7 +50,7 @@ class GrowForm(models.ModelForm):
         }
 
 
-class GrowSensorForm(models.ModelForm):
+class GrowSensorForm(forms.models.ModelForm):
     class Meta:
         model = Sensor
         fields = ['name', 'type']
@@ -65,7 +65,7 @@ class GrowSensorForm(models.ModelForm):
         }
 
 
-class GrowSensorRelayForm(models.ModelForm):
+class GrowSensorRelayForm(forms.models.ModelForm):
     class Meta:
         model = SensorRelay
         fields = ['name', 'pin']
@@ -82,29 +82,13 @@ class GrowSensorRelayForm(models.ModelForm):
         }
 
 
-class GrowSensorRelayScheduleForm(Form):
-    '''
-    fields
-    class Meta:
-        model = RelaySchedule
-        fields = ['name', 'pin']
-        widgets = {
-            "name": TextInput(attrs={
-                "required": True,
-                "placeholder": "Enter a memorable name for this relay"
-            }),
-            "pin": TextInput(attrs={
-                "type": "number",
-                "placeholder": "Enter the GPIO pin this relay is connected to",
-                "required": True
-            }),
-        }
-    '''
-
-    time = CharField(widget=TimeInput(attrs={'placeholder': 'Enter the time when this action will run'}))
+class GrowSensorRelayScheduleForm(forms.Form):
+    execution_time = forms.TimeField(widget=TimeInput(attrs={'placeholder': 'Enter the time when this action will run'}))
+    action = forms.ChoiceField(choices=(('On', 'Turn On'), ('Off', 'Turn Off')))
+    is_enabled = forms.BooleanField()
 
 
-class GrowSensorPreferencesForm(models.ModelForm):
+class GrowSensorPreferencesForm(forms.models.ModelForm):
     class Meta:
         model = GrowSensorPreferences
         fields = ['wifi_network_name', 'wifi_password', 'wifi_type', 'wifi_country_code',
@@ -118,7 +102,7 @@ class GrowSensorPreferencesForm(models.ModelForm):
             try:
                 ssh_key.parse()
             except InvalidKeyError as err:
-                raise ValidationError("Invalid key: {}".format(err))
+                raise forms.ValidationError("Invalid key: {}".format(err))
             except NotImplementedError as err:
-                raise ValidationError("Invalid key type: {}".format(err))
+                raise forms.ValidationError("Invalid key type: {}".format(err))
         return public_key

@@ -1,5 +1,7 @@
 {% extends "grows/detail/edit/base.html" %}
 
+{% load static %}
+
 {% block subhead_additional %}
     {% include "static_helpers/form.html" %}
     <style>
@@ -10,19 +12,20 @@
 {% endblock %}
 
 {% block subfoot_additional %}
+    <script src="{% static "vendor/moment/moment.min.js" %}"></script>
+    <script src="{% static "vendor/moment/moment-timezone-with-data.min.js" %}"></script>
     <script>
-        (function () {
-            document.getElementById('id_type').onchange = function () {
-                var allHelpTextTags = document.getElementsByClassName('sensor-type-help');
-                for (var i = 0; i < allHelpTextTags.length; i++) {
-                    allHelpTextTags[i].style.display = 'none';
-                }
-                var helpTextToShow = document.querySelector("[data-sensor-type-help='" + this.value + "']");
-                helpTextToShow.style.display = 'block';
-            }
-        })();
+        if (USER_TIMEZONE !== GROW_TIMEZONE) {
+            document.getElementById('timezone-message-container').style.display = 'block';
+            var _computeTimezone = function () {
+                var growTimezone = moment().tz(GROW_TIMEZONE);
+                var noteMessage = 'Note...it is ' + growTimezone.format('h:mm:ss a z') + ' in the grow timezone right now.';
+                document.getElementById('timezone-note').innerHTML = noteMessage;
+            };
+            _computeTimezone();
+            setInterval(_computeTimezone, 1000);
+        }
     </script>
-
 {% endblock %}
 
 {% block subcontent %}
@@ -35,14 +38,44 @@
         {% endif %}
         <form method="post" action="">
             {% csrf_token %}
-            <label>
-                Execution Time
-                {{ form.time }}
-            </label>
-            <label>
-                Sensor Type
-                {{ form.type }}
-            </label>
+            <div class="row">
+                <div class="column column-40">
+                    Execution time
+                </div>
+                <div class="column column-40">
+                    {{ form.execution_time }}
+                </div>
+                <div class="column column-20">
+                    ({{ relay.sensor.grow.timezone }})
+                </div>
+            </div>
+            <div id="timezone-message-container" class="row" style="display: none; margin-bottom: 30px;">
+                <div id="timezone-note" class="column"></div>
+            </div>
+            {% if form.execution_time.errors %}
+                <div class="row">
+                    <div class="column">{{ form.execution_time.errors }}</div>
+                </div>
+            {% endif %}
+            <div class="row">
+                <div class="column column-40">
+                    Action
+                </div>
+                <div class="column column-60">
+                    {{ form.action }}
+                </div>
+            </div>
+            {% if form.action.errors %}
+                <div>{{ form.action.errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="column column-40">
+                    Enabled?
+                </div>
+                <div class="column column-60">
+                    {{ form.is_enabled }}
+                </div>
+            </div>
             <div>
                 {% for available_sensor_type in available_sensor_types %}
                     <small class="sensor-type-help" data-sensor-type-help="{{ available_sensor_type.value }}"
@@ -53,7 +86,9 @@
                 {% endfor %}
             </div>
             <div class="break"></div>
-            <button type="submit">Add Sensor</button>
+            <button type="submit">
+                {% if not schedule_item %}Create Schedule{% else %}Save Schedule{% endif %}
+            </button>
         </form>
     </div>
 {% endblock %}
