@@ -1,32 +1,87 @@
 {% extends "grows/detail/edit/base.html" %}
 
 {% block subhead_additional %}
-    {% include "static_helpers/form.html" %}
     <style>
         form label {
             margin-bottom: 0;
+        }
+
+        .schedule-container {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 40px;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-container input {
+            text-align: center;
         }
     </style>
 {% endblock %}
 
 {% block subcontent %}
-    <h2>{{ relay.name }}</h2>
-    <div class="form-container">
-        {% if error %}
-            <h4 class="error">{{ error }}</h4>
-        {% endif %}
-        <form method="post" action="">
-            {% csrf_token %}
-            <label>
-                Relay Name
-                {{ form.name }}
-            </label>
-            <label>
-                Relay GPIO Pin
-                {{ form.pin }}
-            </label>
-            <div class="break"></div>
-            <button type="submit">Save Relay</button>
-        </form>
+    <div class="row">
+        <div class="column">
+            <div class="form-container">
+                {% if error %}
+                    <h4 class="error">{{ error }}</h4>
+                {% endif %}
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <label>
+                        Relay Name
+                        {{ form.name }}
+                    </label>
+                    <label>
+                        Relay GPIO Pin
+                        {{ form.pin }}
+                    </label>
+                    <div class="break"></div>
+
+                    <div class="break"></div>
+                    <button type="submit">Save Relay</button>
+                </form>
+            </div>
+        </div>
+        <div class="column">
+            {% if not relay.schedules.count %}
+                <h3>No schedules created! <a href="schedules/create">Create One</a></h3>
+            {% else %}
+                <div class="schedule-container">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Enabled?</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for schedule in relay.schedules.all %}
+                            <tr>
+                                <td>{{ schedule.pretty_time }}</td>
+                                <td>Turn {{ schedule.action }}</td>
+                                <td>{{ schedule.is_enabled|yesno:"Yes,No" }}</td>
+                                <td>
+                                    <a href="schedules/{{ schedule.id }}/">Edit</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="4" style="text-align: center">
+                                <a class="button button-outline">Add New Action</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
     </div>
+
 {% endblock %}

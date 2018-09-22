@@ -1,6 +1,7 @@
 from .models import Grow, Sensor, SensorSetupToken, SensorRelay
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from datetime import datetime, timezone
+from django.utils.timezone import activate
 
 
 def lookup_grow(function):
@@ -10,6 +11,7 @@ def lookup_grow(function):
             grow = Grow.objects.get(identifier=grow_id)
         except Exception as exception:
             raise Http404
+        activate(grow.timezone)
         request.grow = grow
         if not request.grow.is_owned_by_user(request.user) and (
                     not grow.date_published or grow.visibility == 'Private'):

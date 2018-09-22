@@ -6,6 +6,16 @@
     {% include "static_helpers/form.html" %}
 {% endblock %}
 
+{% block foot_additional %}
+    <script>
+        var guessedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (guessedTimezone) {
+            document.getElementById('id_timezone').value = guessedTimezone
+        }
+    </script>
+{% endblock %}
+
+
 {% block content %}
     <h2>Create a Grow</h2>
     <div class="form-container">
@@ -16,6 +26,9 @@
             {% csrf_token %}
             <label>
                 {{ form.title }}
+            </label>
+            <label>
+                {{ form.timezone }}
             </label>
             <label>
                 Live grow?

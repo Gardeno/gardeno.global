@@ -1,15 +1,45 @@
-from django.forms import models, ValidationError
+from django.forms import models, ValidationError, TypedChoiceField
 from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay
 from django.forms.widgets import TextInput, CheckboxInput, Select
 from django_countries.widgets import CountrySelectWidget
 from sshpubkeys import SSHKey, InvalidKeyError
+import pytz
+from datetime import datetime
+
+
+class TimeZoneFormField(TypedChoiceField):
+    def __init__(self, *args, **kwargs):
+
+        def coerce_to_pytz(val):
+            try:
+                return pytz.timezone(val)
+            except pytz.UnknownTimeZoneError:
+                raise ValidationError("Unknown time zone: '%s'" % val)
+
+        def build_timezones():
+            yield (None, '---Choose the grow\'s timezone---')
+            for common_timezone in pytz.common_timezones:
+                offset = datetime.now(pytz.timezone(common_timezone)).strftime('%z')
+                yield (common_timezone, '{} (GMT{})'.format(common_timezone.replace('_', ' '),
+                                                            offset))
+
+        defaults = {
+            'coerce': coerce_to_pytz,
+            'choices': build_timezones(),
+            'empty_value': None,
+        }
+        defaults.update(kwargs)
+        super(TimeZoneFormField, self).__init__(*args, **defaults)
 
 
 class GrowForm(models.ModelForm):
+    timezone = TimeZoneFormField()
+
     class Meta:
         model = Grow
         fields = [
             'title',
+            'timezone',
             'is_live',
         ]
         widgets = {

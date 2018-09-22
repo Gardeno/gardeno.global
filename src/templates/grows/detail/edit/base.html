@@ -104,16 +104,32 @@
     <div class="subcontent">
         {% block navigation %}
             <div class="navigation-container">
-                <ul class="navigation-pills">
-                    <li{% if not active_view %} class="active"{% endif %}>
-                        <a href="/grows/{{ grow.identifier }}/">Dashboard</a>
-                    </li>
-                    <li{% ifequal active_view "sensors" %} class="active"{% endifequal %}>
-                        <a href="/grows/{{ grow.identifier }}/sensors/">Sensors</a>
-                    </li>
-                </ul>
+                <div>
+                    <ul class="navigation-pills">
+                        <li{% if not active_view %} class="active"{% endif %}>
+                            <a href="/grows/{{ grow.identifier }}/">Dashboard</a>
+                        </li>
+                        <li{% ifequal active_view "sensors" %} class="active"{% endifequal %}>
+                            <a href="/grows/{{ grow.identifier }}/sensors/">Sensors</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
+            {% if sensor %}
+                <div class="clear"></div>
+                <div style="line-height: 50px;margin-bottom: 10px;">
+                    <a href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/">{{ sensor }}</a>
+                    {% if relay %}
+                        <span>-  <a
+                                href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/relays/{{ relay.identifier }}/">{{ relay.name }}</a>
+                        </span>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% endblock %}
-        {% block subcontent %}{% endblock %}
+        <div class="clear"></div>
+        <div>
+            {% block subcontent %}{% endblock %}
+        </div>
     </div>
 {% endblock %}

@@ -3,8 +3,6 @@ from grows.models import RelaySchedule
 
 
 def relay_schedule_saved(sender, instance, **kwargs):
-    if not instance.timezone:
-        return
     next_runtime_utc = instance.calculate_next_runtime_utc()
     instance.enqueue_item_at(next_runtime_utc)
 

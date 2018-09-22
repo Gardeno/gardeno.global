@@ -48,14 +48,14 @@ def grows_create(request):
     if request.POST:
         form = GrowForm(request.POST)
         if form.is_valid():
-            if request.user.grow_limit > 0 and request.user.created_grows.filter(
-                    date_archived__isnull=True).count() >= request.user.grow_limit:
+            if 0 < request.user.grow_limit <= request.user.created_grows.filter(
+                    date_archived__isnull=True).count():
                 return HttpResponseRedirect("/grows/exceeded/")
             grow = Grow.objects.create(identifier=uuid.uuid4(),
                                        title=form.data['title'],
+                                       timezone=form.data['timezone'],
                                        is_live=form.data['is_live'] == 'on',
                                        created_by_user=request.user)
-            grow.create_greengrass_group()
             return HttpResponseRedirect("/grows/{}/".format(grow.identifier))
         else:
             error = 'Form is invalid'
@@ -76,24 +76,6 @@ def grows_detail(request):
         request.user) else 'grows/detail/view/dashboard.html'
     return render(request, template, {
         "grow": request.grow,
-    })
-
-
-@lookup_grow
-@must_own_grow
-def grows_detail_group(request):
-    if request.grow.has_created_greengrass_group:
-        return HttpResponseRedirect('/grows/{}/'.format(request.grow.identifier))
-    error = None
-    if request.POST:
-        success = request.grow.create_greengrass_group()
-        if success:
-            return HttpResponseRedirect('/grows/{}/'.format(request.grow.identifier))
-        else:
-            error = "Unable to create group at this time. Please try again later."
-    return render(request, 'grows/detail/edit/group.html', {
-        "grow": request.grow,
-        "error": error
     })
 
 
@@ -366,6 +348,7 @@ def grows_detail_sensors_detail_relay_detail(request):
     return render(request, 'grows/detail/edit/sensors/relays/detail.html', {
         "grow": request.grow,
         "sensor": request.sensor,
+        "relay": request.relay,
         "active_view": "sensors",
         "form": form,
     })
