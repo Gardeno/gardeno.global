@@ -1,12 +1,11 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm
+from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm, GrowSensorRelayScheduleForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
     SENSOR_TYPES, SensorUpdate, SensorRelay
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
-from .decorators import lookup_grow, must_own_grow, lookup_sensor, must_have_created_core, \
-    grow_sensor_setup_token_is_valid, lookup_relay
+from .decorators import lookup_grow, must_own_grow, lookup_sensor, grow_sensor_setup_token_is_valid, lookup_relay
 from datetime import datetime, timezone
 from django.conf import settings
 import os
@@ -117,7 +116,6 @@ def grows_detail_sensors_preferences(request):
 
 @lookup_grow
 @must_own_grow
-@must_have_created_core
 def grows_detail_sensors_create(request):
     initial_type = request.GET.get('type', 'Ambient')
     error = None
@@ -349,6 +347,39 @@ def grows_detail_sensors_detail_relay_detail(request):
         "grow": request.grow,
         "sensor": request.sensor,
         "relay": request.relay,
+        "active_view": "sensors",
+        "form": form,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+@lookup_relay
+def grows_detail_sensors_detail_relay_schedule_detail(request, schedule_id=None):
+    schedule_item = None
+    if schedule_id:
+        try:
+            schedule_item = request.relay.schedules.get(id=schedule_id)
+        except:
+            raise Http404
+    form = GrowSensorRelayScheduleForm()
+    '''
+    if schedule_id:
+
+    form = GrowSensorRelayForm(instance=request.relay)
+    if request.POST:
+        form = GrowSensorRelayForm(request.POST, instance=request.relay)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    '''
+    return render(request, 'grows/detail/edit/sensors/relays/schedules/detail.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "relay": request.relay,
+        "schedule_item": schedule_item,
         "active_view": "sensors",
         "form": form,
     })

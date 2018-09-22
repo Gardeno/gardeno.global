@@ -1,6 +1,6 @@
-from django.forms import models, ValidationError, TypedChoiceField
-from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay
-from django.forms.widgets import TextInput, CheckboxInput, Select
+from django.forms import models, ValidationError, TypedChoiceField, Form, CharField
+from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, RelaySchedule
+from django.forms.widgets import TextInput, CheckboxInput, Select, TimeInput
 from django_countries.widgets import CountrySelectWidget
 from sshpubkeys import SSHKey, InvalidKeyError
 import pytz
@@ -80,6 +80,28 @@ class GrowSensorRelayForm(models.ModelForm):
                 "required": True
             }),
         }
+
+
+class GrowSensorRelayScheduleForm(Form):
+    '''
+    fields
+    class Meta:
+        model = RelaySchedule
+        fields = ['name', 'pin']
+        widgets = {
+            "name": TextInput(attrs={
+                "required": True,
+                "placeholder": "Enter a memorable name for this relay"
+            }),
+            "pin": TextInput(attrs={
+                "type": "number",
+                "placeholder": "Enter the GPIO pin this relay is connected to",
+                "required": True
+            }),
+        }
+    '''
+
+    time = CharField(widget=TimeInput(attrs={'placeholder': 'Enter the time when this action will run'}))
 
 
 class GrowSensorPreferencesForm(models.ModelForm):

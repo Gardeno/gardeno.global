@@ -307,6 +307,20 @@ class RelaySchedule(models.Model):
                                                          self.hour, self.minute, self.second))
         return localized_time.strftime('%-I:%M:%S %p')
 
+    @property
+    def last_run_time(self):
+        items = self.schedule_items.filter(date_scheduled__lte=datetime.now(timezone('UTC')))
+        if items:
+            return items[0].date_scheduled
+        return None
+
+    @property
+    def next_run_time(self):
+        items = self.schedule_items.filter(date_scheduled__gt=datetime.now(timezone('UTC')))
+        if items:
+            return items[0].date_scheduled
+        return None
+
     def calculate_next_runtime_utc(self, last_scheduled_datetime_utc=None):
         if not last_scheduled_datetime_utc:
             local_time_now = datetime.now(self.timezone)

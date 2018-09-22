@@ -1,0 +1,59 @@
+{% extends "grows/detail/edit/base.html" %}
+
+{% block subhead_additional %}
+    {% include "static_helpers/form.html" %}
+    <style>
+        form label {
+            margin-bottom: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block subfoot_additional %}
+    <script>
+        (function () {
+            document.getElementById('id_type').onchange = function () {
+                var allHelpTextTags = document.getElementsByClassName('sensor-type-help');
+                for (var i = 0; i < allHelpTextTags.length; i++) {
+                    allHelpTextTags[i].style.display = 'none';
+                }
+                var helpTextToShow = document.querySelector("[data-sensor-type-help='" + this.value + "']");
+                helpTextToShow.style.display = 'block';
+            }
+        })();
+    </script>
+
+{% endblock %}
+
+{% block subcontent %}
+    <h2>
+        {% if not schedule_item %}Add a new scheduled action{% else %}Edit scheduled action{% endif %}
+    </h2>
+    <div class="form-container">
+        {% if error %}
+            <h4 class="error">{{ error }}</h4>
+        {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
+            <label>
+                Execution Time
+                {{ form.time }}
+            </label>
+            <label>
+                Sensor Type
+                {{ form.type }}
+            </label>
+            <div>
+                {% for available_sensor_type in available_sensor_types %}
+                    <small class="sensor-type-help" data-sensor-type-help="{{ available_sensor_type.value }}"
+                            {% ifnotequal available_sensor_type.value initial_type %}
+                           style="display: none"{% endifnotequal %}>
+                        {{ available_sensor_type.help_text }}
+                    </small>
+                {% endfor %}
+            </div>
+            <div class="break"></div>
+            <button type="submit">Add Sensor</button>
+        </form>
+    </div>
+{% endblock %}

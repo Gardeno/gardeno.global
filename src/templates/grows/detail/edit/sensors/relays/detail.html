@@ -1,4 +1,5 @@
 {% extends "grows/detail/edit/base.html" %}
+{% load humanize %}
 
 {% block subhead_additional %}
     <style>
@@ -58,23 +59,41 @@
                             <th>Time</th>
                             <th>Action</th>
                             <th>Enabled?</th>
+                            <th>Last Run</th>
+                            <th>Next Run</th>
                             <th></th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for schedule in relay.schedules.all %}
                             <tr>
-                                <td>{{ schedule.pretty_time }}</td>
+                                <td>
+                                    {{ schedule.pretty_time }}
+                                </td>
                                 <td>Turn {{ schedule.action }}</td>
                                 <td>{{ schedule.is_enabled|yesno:"Yes,No" }}</td>
+                                <td>
+                                    {% if schedule.last_run_time %}
+                                        {{ schedule.last_run_time|naturaltime }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if schedule.next_run_time %}
+                                        {{ schedule.next_run_time|naturaltime }}
+                                    {% else %}
+                                        Not scheduled
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <a href="schedules/{{ schedule.id }}/">Edit</a>
                                 </td>
                             </tr>
                         {% endfor %}
                         <tr>
-                            <td colspan="4" style="text-align: center">
-                                <a class="button button-outline">Add New Action</a>
+                            <td colspan="6" style="text-align: center">
+                                <a class="button button-outline" href="schedules/create/">Add New Action</a>
                             </td>
                         </tr>
                         </tbody>

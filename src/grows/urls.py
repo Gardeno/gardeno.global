@@ -5,7 +5,8 @@ from .views import grows_list, grows_create, grows_detail, grows_detail_sensors,
     grows_detail_sensors_detail_setup_finished, grows_detail_sensors_detail_update, \
     grows_detail_sensors_detail_executable, grows_detail_sensors_detail_requirements, \
     grows_detail_sensors_detail_environment, grows_detail_sensors_detail_vpn_config, \
-    grows_detail_sensors_detail_relay_create, grows_detail_sensors_detail_relay_detail
+    grows_detail_sensors_detail_relay_create, grows_detail_sensors_detail_relay_detail, \
+    grows_detail_sensors_detail_relay_schedule_detail
 
 urlpatterns = [
     path('', grows_list),
@@ -26,5 +27,9 @@ urlpatterns = [
     path('<grow_id>/sensors/<sensor_id>/vpn_config/', grows_detail_sensors_detail_vpn_config),
     path('<grow_id>/sensors/<sensor_id>/relays/create/', grows_detail_sensors_detail_relay_create),
     path('<grow_id>/sensors/<sensor_id>/relays/<relay_id>/', grows_detail_sensors_detail_relay_detail),
+    path('<grow_id>/sensors/<sensor_id>/relays/<relay_id>/schedules/create/',
+         grows_detail_sensors_detail_relay_schedule_detail),
+    path('<grow_id>/sensors/<sensor_id>/relays/<relay_id>/schedules/<schedule_id>/',
+         grows_detail_sensors_detail_relay_schedule_detail),
     path('<grow_id>/update/', grows_detail_update),
 ]
