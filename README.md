@@ -108,3 +108,12 @@ View queues at:
 ```
 http://localhost:8001/admin/queues/
 ```
+
+# Production
+
+```
+docker-compose -f docker-compose-production-jobs.yml run web rqscheduler --host gardeno.ujsafd.0001.usw2.cache.amazonaws.com -i 5
+docker-compose -f docker-compose-production-jobs.yml run web rq worker -u redis://gardeno.ujsafd.0001.usw2.cache.amazonaws.com:6379
+https://gardeno.global/admin/queues/
+
+```
