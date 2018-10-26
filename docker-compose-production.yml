@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: ./config/dockerfiles/web/Dockerfile
-    command: /usr/bin/supervisord
+    command: python3 manage.py runserver 0.0.0.0:80
     volumes:
       - ./src:/code
       - ./fixtures:/fixtures
