@@ -13,6 +13,8 @@ class GrowConsumer(WebsocketConsumer):
                 self.channel_name
             )
             self.accept()
+        else:
+            print('Unable to authenticate user.')
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
