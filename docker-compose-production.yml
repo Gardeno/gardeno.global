@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  redis:
+    restart: always
+    image: "redis:4.0.10"
+    ports:
+      - "6379:6379"
+  web:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./config/dockerfiles/web/Dockerfile
+    command: /usr/bin/supervisord
+    volumes:
+      - ./src:/code
+      - ./fixtures:/fixtures
+    ports:
+      - "8001:80"
+    depends_on:
+      - redis
