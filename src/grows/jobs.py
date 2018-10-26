@@ -3,9 +3,6 @@ import os
 from datetime import datetime, timedelta
 from pytz import timezone
 
-# TODO: Put this logic somewhere that is not protected
-from api.views import _sensor_relay_update
-
 
 def _setup():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gardeno.settings")
@@ -15,6 +12,8 @@ def _setup():
 def execute_relay_schedule(relay_schedule_id, **kwargs):
     _setup()
     from grows.models import RelayScheduleItem
+    # TODO: Put this logic somewhere that is not protected
+    from api.views import _sensor_relay_update
     relay_schedule_item = RelayScheduleItem.objects.get(id=relay_schedule_id)
     # Send the command (on or off, for now)
     sensor_relay = relay_schedule_item.relay_schedule.relay
