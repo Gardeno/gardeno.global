@@ -66,6 +66,7 @@ To install database migrations against a development database
 
 ```
 docker run -it gardeno.global python3 manage.py migrate
+docker run -it gardeno.global python3 manage.py collectstatic
 ```
 
 # Colors
