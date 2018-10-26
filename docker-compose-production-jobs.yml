@@ -9,5 +9,3 @@ services:
     volumes:
       - ./src:/code
       - ./fixtures:/fixtures
-    ports:
-      - "8001:80"

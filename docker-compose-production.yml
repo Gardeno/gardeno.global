@@ -11,4 +11,4 @@ services:
       - ./src:/code
       - ./fixtures:/fixtures
     ports:
-      - "8001:80"
+      - "80:80"
