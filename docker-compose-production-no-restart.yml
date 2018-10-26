@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./config/dockerfiles/web/Dockerfile
+    command: /usr/bin/supervisord
+    volumes:
+      - ./src:/code
+      - ./fixtures:/fixtures
+    ports:
+      - "8001:80"
