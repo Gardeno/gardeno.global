@@ -17,6 +17,10 @@ from rq import Queue
 from rq_scheduler import Scheduler
 from grows.jobs import execute_relay_schedule
 
+ON_OFF_CHOICES = (
+    ('On', 'On'), ('Off', 'Off')
+)
+
 VISIBILITY_OPTIONS = [
     {
         'value': 'Public',
@@ -293,7 +297,7 @@ class RelaySchedule(models.Model):
     hour = models.IntegerField()
     minute = models.IntegerField()
     second = models.IntegerField(default=0)
-    action = models.CharField(max_length=10, null=True, choices=(('On', 'On'), ('Off', 'Off')))
+    action = models.CharField(max_length=10, null=True, choices=ON_OFF_CHOICES)
     is_enabled = models.BooleanField(default=True)
 
     @property
@@ -404,3 +408,23 @@ class GrowSensorPreferences(BaseModel):
     publish_ssh_key_for_authentication = models.TextField(null=True, blank=True)
     sensor_user_password = models.CharField(max_length=255, null=True, blank=True,
                                             help_text='Will be auto-generated if left blank.')
+
+
+class SensorSwitch(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    sensor = models.ForeignKey(Sensor, related_name='switches', on_delete=models.CASCADE)
+    identifier = models.UUIDField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    pin = models.IntegerField()
+
+    def __str__(self):
+        return '{} - {}'.format(self.sensor, self.name)
+
+
+class SwitchTrigger(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    switch = models.ForeignKey(SensorSwitch, related_name='triggers', on_delete=models.CASCADE)
+    on_action = models.CharField(max_length=10, null=True, choices=ON_OFF_CHOICES)
+    after_sustained_for_seconds = models.IntegerField(default=0,
+                                                      help_text='If 0, trigger will be executed immediately. Otherwise, must be in position for designated number of seconds.')
+    relay = models.ForeignKey(SensorRelay, null=True)

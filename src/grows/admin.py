@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from .models import Grow, Rack, Tray, TrayPosition, Sensor, GrowSensorPreferences, SensorSetupToken, SensorUpdate, \
-    SensorAuthenticationToken, SensorRelay, RelaySchedule, RelayScheduleItem
+    SensorAuthenticationToken, SensorRelay, RelaySchedule, RelayScheduleItem, SensorSwitch
 
 
 class SensorSetupTokenAdmin(admin.ModelAdmin):
@@ -27,6 +27,10 @@ class RelayScheduleAdmin(admin.ModelAdmin):
     inlines = (RelayScheduleItemInline,)
 
 
+class SensorSwitchAdmin(admin.ModelAdmin):
+    list_display = ['identifier', 'sensor', 'name', 'pin', 'date_created']
+
+
 admin.site.register(Grow, admin.OSMGeoAdmin)
 admin.site.register(Rack, admin.OSMGeoAdmin)
 admin.site.register(Tray, admin.OSMGeoAdmin)
@@ -38,3 +42,4 @@ admin.site.register(SensorUpdate)
 admin.site.register(SensorAuthenticationToken, SensorAuthenticationTokenAdmin)
 admin.site.register(SensorRelay, SensorRelayAdmin)
 admin.site.register(RelaySchedule, RelayScheduleAdmin)
+admin.site.register(SensorSwitch, SensorSwitchAdmin)

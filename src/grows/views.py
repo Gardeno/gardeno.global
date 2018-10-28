@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm, GrowSensorRelayScheduleForm
+from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm, \
+    GrowSensorRelayScheduleForm, GrowSensorSwitchForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SensorUpdate, SensorRelay, RelaySchedule
+    SENSOR_TYPES, SensorUpdate, SensorRelay, RelaySchedule, SensorSwitch
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
 from .decorators import lookup_grow, must_own_grow, lookup_sensor, grow_sensor_setup_token_is_valid, lookup_relay
@@ -411,3 +412,30 @@ def grows_detail_update(request):
     else:
         return HttpResponseBadRequest('Can only publish or save')
     return HttpResponseRedirect('/grows/{}'.format(request.grow.identifier))
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+def grows_detail_sensors_detail_switch_detail(request, switch_id=None):
+    instance = SensorSwitch(sensor=request.sensor, identifier=uuid.uuid4())
+    if switch_id:
+        try:
+            instance = SensorSwitch.objects.get(identifier=switch_id)
+        except Exception as err:
+            print(err)
+            raise Http404
+    form = GrowSensorSwitchForm(instance=instance)
+    if request.POST:
+        form = GrowSensorSwitchForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/'.format(request.grow.identifier,
+                                                                       request.sensor.identifier))
+    return render(request, 'grows/detail/edit/sensors/switches/detail.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "switch": instance,
+        "active_view": "sensors",
+        "form": form,
+    })

@@ -6,7 +6,7 @@ from .views import grows_list, grows_create, grows_detail, grows_detail_sensors,
     grows_detail_sensors_detail_executable, grows_detail_sensors_detail_requirements, \
     grows_detail_sensors_detail_environment, grows_detail_sensors_detail_vpn_config, \
     grows_detail_sensors_detail_relay_create, grows_detail_sensors_detail_relay_detail, \
-    grows_detail_sensors_detail_relay_schedule_detail
+    grows_detail_sensors_detail_relay_schedule_detail, grows_detail_sensors_detail_switch_detail
 
 urlpatterns = [
     path('', grows_list),
@@ -31,5 +31,7 @@ urlpatterns = [
          grows_detail_sensors_detail_relay_schedule_detail),
     path('<grow_id>/sensors/<sensor_id>/relays/<relay_id>/schedules/<schedule_id>/',
          grows_detail_sensors_detail_relay_schedule_detail),
+    path('<grow_id>/sensors/<sensor_id>/switches/create/', grows_detail_sensors_detail_switch_detail),
+    path('<grow_id>/sensors/<sensor_id>/switches/<switch_id>/', grows_detail_sensors_detail_switch_detail),
     path('<grow_id>/update/', grows_detail_update),
 ]

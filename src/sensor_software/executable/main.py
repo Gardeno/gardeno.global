@@ -25,6 +25,11 @@ ch.setFormatter(formatter)
 root.addHandler(ch)
 
 output_devices = {}
+input_devices = {
+    "buttons": {
+
+    }
+}
 
 
 # Non-blocking interval class

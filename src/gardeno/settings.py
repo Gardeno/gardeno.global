@@ -220,3 +220,4 @@ TIME_INPUT_FORMATS = [
     '%H:%M',
     '%-H:%M',
 ]
+

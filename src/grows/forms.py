@@ -1,5 +1,5 @@
 from django import forms
-from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, RelaySchedule
+from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, SensorSwitch
 from django.forms.widgets import TextInput, CheckboxInput, Select, TimeInput
 from django_countries.widgets import CountrySelectWidget
 from sshpubkeys import SSHKey, InvalidKeyError
@@ -83,7 +83,8 @@ class GrowSensorRelayForm(forms.models.ModelForm):
 
 
 class GrowSensorRelayScheduleForm(forms.Form):
-    execution_time = forms.TimeField(widget=TimeInput(attrs={'placeholder': 'Enter the time when this action will run'}))
+    execution_time = forms.TimeField(
+        widget=TimeInput(attrs={'placeholder': 'Enter the time when this action will run'}))
     action = forms.ChoiceField(choices=(('On', 'Turn On'), ('Off', 'Turn Off')))
     is_enabled = forms.BooleanField()
 
@@ -106,3 +107,20 @@ class GrowSensorPreferencesForm(forms.models.ModelForm):
             except NotImplementedError as err:
                 raise forms.ValidationError("Invalid key type: {}".format(err))
         return public_key
+
+
+class GrowSensorSwitchForm(forms.models.ModelForm):
+    class Meta:
+        model = SensorSwitch
+        fields = ['name', 'pin']
+        widgets = {
+            "name": TextInput(attrs={
+                "required": True,
+                "placeholder": "Enter a memorable name for this switch"
+            }),
+            "pin": TextInput(attrs={
+                "type": "number",
+                "placeholder": "Enter the GPIO pin this switch is connected to",
+                "required": True
+            }),
+        }

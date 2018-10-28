@@ -121,6 +121,29 @@
                     <a href="relays/create/">Add Relay</a>
                 </div>
             </div>
+            <div>
+                <h2>Sensor switches:</h2>
+            </div>
+            <div>
+                {% if not sensor.switches.count %}
+                    <h3>Sensor has no switches setup</h3>
+                {% else %}
+                    <div>
+                        {% for switch in sensor.switches.all %}
+                            <div>
+                                <a href="switches/{{ switch.identifier }}/">{{ switch.name }}
+                                    (created {{ switch.date_created|naturaltime }})</a>
+                            </div>
+                            <div class="switch-updates" data-switch-identifier="{{ switch.identifier }}">
+
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div>
+                    <a href="switches/create/">Add Switch</a>
+                </div>
+            </div>
             {% if sensor.vpn_config %}
                 <div>
                     <h2>VPN has been configured!</h2>

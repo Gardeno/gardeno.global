@@ -1,0 +1,105 @@
+{% extends "grows/detail/edit/base.html" %}
+{% load humanize %}
+
+{% block subhead_additional %}
+    <style>
+        form label {
+            margin-bottom: 0;
+        }
+
+        .schedule-container {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 40px;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-container input {
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block subcontent %}
+    <div class="row">
+        <div class="column">
+            <div class="form-container">
+                {% if error %}
+                    <h4 class="error">{{ error }}</h4>
+                {% endif %}
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <label>
+                        Switch Name
+                        {{ form.name }}
+                    </label>
+                    <label>
+                        Switch GPIO Pin
+                        {{ form.pin }}
+                    </label>
+                    <div class="break"></div>
+                    <div class="break"></div>
+                    <button type="submit">Save Switch</button>
+                </form>
+            </div>
+        </div>
+        <div class="column">
+            {% if not switch.triggers.count %}
+                <h3>No triggers created! <a href="triggers/create">Create One</a></h3>
+            {% else %}
+                <div class="schedule-container">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Enabled?</th>
+                            <th>Last Run</th>
+                            <th>Next Run</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for trigger in switch.triggers.all %}
+                            <tr>
+                                <td>
+                                    {{ schedule.pretty_time }}
+                                </td>
+                                <td>Turn {{ schedule.action }}</td>
+                                <td>{{ schedule.is_enabled|yesno:"Yes,No" }}</td>
+                                <td>
+                                    {% if schedule.last_run_time %}
+                                        <span title="{{ schedule.last_run_time }}">{{ schedule.last_run_time|naturaltime }}</span>
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if schedule.next_run_time %}
+                                        <span title="{{ schedule.next_run_time }}">{{ schedule.next_run_time|naturaltime }}</span>
+                                    {% else %}
+                                        Not scheduled
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="schedules/{{ schedule.id }}/">Edit</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="6" style="text-align: center">
+                                <a class="button button-outline" href="schedules/create/">Add New Action</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

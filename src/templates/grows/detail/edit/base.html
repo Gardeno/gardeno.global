@@ -125,6 +125,15 @@
                                 href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/relays/{{ relay.identifier }}/">{{ relay.name }}</a>
                         </span>
                     {% endif %}
+                    {% if switch %}
+                        {% if not switch.id %}
+                            <span>- New Switch</span>
+                        {% else %}
+                            <span>- <a
+                                    href="/grows/{{ grow.identifier }}/sensors/{{ sensor.identifier }}/switches/{{ switch.identifier }}/">{{ switch.name }}</a>
+                        </span>
+                        {% endif %}
+                    {% endif %}
                 </div>
             {% endif %}
         {% endblock %}
