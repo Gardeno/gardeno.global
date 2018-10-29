@@ -11,6 +11,7 @@ import logging
 import threading
 import json
 import gpiozero
+from signal import pause
 
 env_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
@@ -52,6 +53,36 @@ class Interval:
         self.stopEvent.set()
 
 
+class InputButtonThread:
+    def __init__(self, switch_pin, switch_item):
+        self.switch_pin = switch_pin
+        self.switch_item = switch_item
+        self.event = threading.Event()
+        thread = threading.Thread(target=self.start_thread)
+        thread.start()
+        thread.join()
+
+    def button_pressed(self):
+        logging.info('Button was pressed')
+        logging.info('{} - {}'.format(self.switch_pin, self.switch_item))
+
+    def button_released(self):
+        logging.info('Button was released')
+        logging.info('{} - {}'.format(self.switch_pin, self.switch_item))
+
+    def button_held(self):
+        logging.info('Button was held')
+        logging.info('{} - {}'.format(self.switch_pin, self.switch_item))
+
+    def start_thread(self):
+        logging.info('Starting thread...')
+        switch_button = gpiozero.Button(self.switch_pin)
+        # switch_button.when_pressed = self.button_pressed
+        # switch_button.when_released = self.button_released
+        switch_button.when_held = self.button_held
+        pause()
+
+
 # Handle exit codes
 
 def signal_handler(sig, frame):
@@ -74,6 +105,22 @@ def send(ws, message_id, data=None):
     ws.send(json.dumps(message))
 
 
+def button_pressed(pin_pressed):
+    def on_press():
+        logging.info("Pin pressed! {}".format(pin_pressed))
+
+    logging.info("Setting up pin press on {}".format(pin_pressed))
+    return on_press
+
+
+def button_released(pin_released):
+    def on_release():
+        logging.info("Pin released! {}".format(pin_released))
+
+    logging.info("Setting up pin released on {}".format(pin_released))
+    return on_release
+
+
 def on_message(ws, text_message):
     try:
         message = json.loads(text_message)
@@ -84,12 +131,12 @@ def on_message(ws, text_message):
         return
     logging.info('Received message: {}'.format(message))
     logging.info(message)
+    if not message['data']:
+        return send(ws, 'error', {
+            "message": "Missing message data."
+        })
     if message['id'] in ['setup_relay', 'turn_on_relay', 'turn_off_relay']:
-        if not message['data']:
-            return send(ws, 'error', {
-                "message": "Missing message data."
-            })
-        elif not message['data']['pin'] or type(message['data']['pin']) != int:
+        if not message['data']['pin'] or type(message['data']['pin']) != int:
             return send(ws, 'error', {
                 "message": "Missing parameter `pin` (integer) in message data"
             })
@@ -108,6 +155,20 @@ def on_message(ws, text_message):
                 logging.info('Successfully turned off pin {}'.format(desired_pin))
         except Exception as err:
             logging.error('Unable to perform action on relay: {}'.format(err))
+    elif message['id'] == 'setup_results':
+        for switch in message['data'].get('switches', []):
+            switch_pin = switch.get('pin', None)
+            logging.info('\tSetting up {} on pin {}'.format(switch['name'], switch_pin))
+            if not switch_pin or type(switch_pin) != int:
+                send(ws, 'error', {
+                    "message": "Missing parameter `pin` (integer) in message data"
+                })
+                continue
+            if switch_pin in input_devices:
+                logging.info('\tPin {} has already been setup'.format(switch_pin))
+                continue
+            input_devices[switch_pin] = InputButtonThread(switch_pin, switch)
+            logging.info('\tFinished setting up {} on pin {}'.format(switch['name'], switch_pin))
 
 
 def on_error(ws, error):
@@ -126,6 +187,7 @@ def on_open(ws):
         send(ws, 'ping')
 
     Interval(20, websocket_keepalive)
+    send(ws, 'setup_sensor')
 
 
 def main():

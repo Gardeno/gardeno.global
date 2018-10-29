@@ -6,13 +6,15 @@ from .views import grows_list, grows_create, grows_detail, grows_detail_sensors,
     grows_detail_sensors_detail_executable, grows_detail_sensors_detail_requirements, \
     grows_detail_sensors_detail_environment, grows_detail_sensors_detail_vpn_config, \
     grows_detail_sensors_detail_relay_create, grows_detail_sensors_detail_relay_detail, \
-    grows_detail_sensors_detail_relay_schedule_detail, grows_detail_sensors_detail_switch_detail
+    grows_detail_sensors_detail_relay_schedule_detail, grows_detail_sensors_detail_switch_detail, \
+    grows_detail_sensors_detail_switch_trigger_detail
 
 urlpatterns = [
     path('', grows_list),
     path('create/', grows_create),
     path('exceeded/', grows_exceeded),
     path('<grow_id>/', grows_detail),
+    path('<grow_id>/update/', grows_detail_update),
     path('<grow_id>/sensors/', grows_detail_sensors),
     path('<grow_id>/sensors/preferences/', grows_detail_sensors_preferences),
     path('<grow_id>/sensors/create/', grows_detail_sensors_create),
@@ -33,5 +35,8 @@ urlpatterns = [
          grows_detail_sensors_detail_relay_schedule_detail),
     path('<grow_id>/sensors/<sensor_id>/switches/create/', grows_detail_sensors_detail_switch_detail),
     path('<grow_id>/sensors/<sensor_id>/switches/<switch_id>/', grows_detail_sensors_detail_switch_detail),
-    path('<grow_id>/update/', grows_detail_update),
+    path('<grow_id>/sensors/<sensor_id>/switches/<switch_id>/triggers/create/',
+         grows_detail_sensors_detail_switch_trigger_detail),
+    path('<grow_id>/sensors/<sensor_id>/switches/<switch_id>/triggers/<trigger_id>/',
+         grows_detail_sensors_detail_switch_trigger_detail),
 ]

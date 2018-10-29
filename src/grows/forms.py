@@ -1,5 +1,5 @@
 from django import forms
-from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, SensorSwitch
+from .models import Grow, Sensor, GrowSensorPreferences, SensorRelay, SensorSwitch, SwitchTrigger
 from django.forms.widgets import TextInput, CheckboxInput, Select, TimeInput
 from django_countries.widgets import CountrySelectWidget
 from sshpubkeys import SSHKey, InvalidKeyError
@@ -53,14 +53,11 @@ class GrowForm(forms.models.ModelForm):
 class GrowSensorForm(forms.models.ModelForm):
     class Meta:
         model = Sensor
-        fields = ['name', 'type']
+        fields = ['name', ]
         widgets = {
             "name": TextInput(attrs={
                 "required": True,
                 "placeholder": "Enter a memorable name for this sensor"
-            }),
-            "type": Select(attrs={
-                "required": True
             }),
         }
 
@@ -124,3 +121,14 @@ class GrowSensorSwitchForm(forms.models.ModelForm):
                 "required": True
             }),
         }
+
+
+class GrowSensorSwitchTriggerForm(forms.models.ModelForm):
+    def __init__(self, *args, **kwargs):
+        grow = kwargs.pop('grow')
+        super(GrowSensorSwitchTriggerForm, self).__init__(*args, **kwargs)
+        self.fields['trigger_relay'].queryset = SensorRelay.objects.filter(sensor__grow=grow)
+
+    class Meta:
+        model = SwitchTrigger
+        fields = ['triggered_when_switch_is', 'after_sustained_for_seconds', 'trigger_relay']

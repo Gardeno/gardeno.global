@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import GrowForm, GrowSensorForm, GrowSensorPreferencesForm, GrowSensorRelayForm, \
-    GrowSensorRelayScheduleForm, GrowSensorSwitchForm
+    GrowSensorRelayScheduleForm, GrowSensorSwitchForm, GrowSensorSwitchTriggerForm
 from .models import Grow, Sensor, GrowSensorPreferences, SensorSetupToken, VISIBILITY_OPTION_VALUES, \
-    SENSOR_TYPES, SensorUpdate, SensorRelay, RelaySchedule, SensorSwitch
+    SENSOR_TYPES, SensorUpdate, SensorRelay, RelaySchedule, SensorSwitch, SwitchTrigger
 import uuid
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, JsonResponse, Http404
-from .decorators import lookup_grow, must_own_grow, lookup_sensor, grow_sensor_setup_token_is_valid, lookup_relay
+from .decorators import lookup_grow, must_own_grow, lookup_sensor, grow_sensor_setup_token_is_valid, lookup_relay, \
+    lookup_switch
 from datetime import datetime, timezone
 from django.conf import settings
 import os
@@ -417,14 +418,12 @@ def grows_detail_update(request):
 @lookup_grow
 @must_own_grow
 @lookup_sensor
-def grows_detail_sensors_detail_switch_detail(request, switch_id=None):
-    instance = SensorSwitch(sensor=request.sensor, identifier=uuid.uuid4())
-    if switch_id:
-        try:
-            instance = SensorSwitch.objects.get(identifier=switch_id)
-        except Exception as err:
-            print(err)
-            raise Http404
+@lookup_switch
+def grows_detail_sensors_detail_switch_detail(request):
+    if request.switch:
+        instance = request.switch
+    else:
+        instance = SensorSwitch(sensor=request.sensor, identifier=uuid.uuid4())
     form = GrowSensorSwitchForm(instance=instance)
     if request.POST:
         form = GrowSensorSwitchForm(request.POST, instance=instance)
@@ -436,6 +435,37 @@ def grows_detail_sensors_detail_switch_detail(request, switch_id=None):
         "grow": request.grow,
         "sensor": request.sensor,
         "switch": instance,
+        "active_view": "sensors",
+        "form": form,
+    })
+
+
+@lookup_grow
+@must_own_grow
+@lookup_sensor
+@lookup_switch
+def grows_detail_sensors_detail_switch_trigger_detail(request, trigger_id=None):
+    if not request.switch:
+        raise Http404
+    instance = SwitchTrigger(switch=request.switch, identifier=uuid.uuid4())
+    if trigger_id:
+        try:
+            instance = SwitchTrigger.objects.get(identifier=trigger_id)
+        except:
+            raise Http404
+    form = GrowSensorSwitchTriggerForm(instance=instance, grow=request.grow)
+    if request.POST:
+        form = GrowSensorSwitchTriggerForm(request.POST, instance=instance, grow=request.grow)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/grows/{}/sensors/{}/switches/{}/'.format(request.grow.identifier,
+                                                                                   request.sensor.identifier,
+                                                                                   request.switch.identifier))
+    return render(request, 'grows/detail/edit/sensors/switches/triggers/detail.html', {
+        "grow": request.grow,
+        "sensor": request.sensor,
+        "switch": request.switch,
+        "trigger": instance,
         "active_view": "sensors",
         "form": form,
     })

@@ -1,0 +1,35 @@
+{% extends "grows/detail/edit/base.html" %}
+{% load humanize %}
+
+{% block subhead_additional %}
+    <style>
+        form label {
+            margin-bottom: 0;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-container input {
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block subcontent %}
+    <div class="row">
+        <div class="column">
+            <div class="form-container">
+                {% if error %}
+                    <h4 class="error">{{ error }}</h4>
+                {% endif %}
+                <form method="post" action="">
+                    {% csrf_token %}
+                    {{ form }}
+                    <button type="submit">Save Trigger</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

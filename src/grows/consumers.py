@@ -67,6 +67,15 @@ class SensorConsumer(WebsocketConsumer):
                     'id': 'pong',
                 }))
                 return
+            elif message['id'] == 'setup_sensor':
+                self.send(text_data=json.dumps({
+                    'id': 'setup_results',
+                    'data': {
+                        'relays': [x.to_json() for x in self.sensor.relays.all()],
+                        'switches': [x.to_json() for x in self.sensor.switches.all()],
+                    }
+                }))
+                return
             print('Received message from sensor {}...: {}'.format(self.sensor.name, text_data))
 
     def relay_update(self, event):

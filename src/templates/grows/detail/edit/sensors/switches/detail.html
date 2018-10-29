@@ -55,11 +55,9 @@
                     <table>
                         <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Action</th>
-                            <th>Enabled?</th>
-                            <th>Last Run</th>
-                            <th>Next Run</th>
+                            <th>Triggered When Switch Is</th>
+                            <th>After Sustained For Seconds</th>
+                            <th>Trigger Relay?</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -67,32 +65,22 @@
                         {% for trigger in switch.triggers.all %}
                             <tr>
                                 <td>
-                                    {{ schedule.pretty_time }}
-                                </td>
-                                <td>Turn {{ schedule.action }}</td>
-                                <td>{{ schedule.is_enabled|yesno:"Yes,No" }}</td>
-                                <td>
-                                    {% if schedule.last_run_time %}
-                                        <span title="{{ schedule.last_run_time }}">{{ schedule.last_run_time|naturaltime }}</span>
-                                    {% else %}
-                                        Never
-                                    {% endif %}
+                                    {{ trigger.triggered_when_switch_is }}
                                 </td>
                                 <td>
-                                    {% if schedule.next_run_time %}
-                                        <span title="{{ schedule.next_run_time }}">{{ schedule.next_run_time|naturaltime }}</span>
-                                    {% else %}
-                                        Not scheduled
-                                    {% endif %}
+                                    {{ trigger.after_sustained_for_seconds }}
                                 </td>
                                 <td>
-                                    <a href="schedules/{{ schedule.id }}/">Edit</a>
+                                    {{ trigger.trigger_relay }}
+                                </td>
+                                <td>
+                                    <a href="triggers/{{ trigger.identifier }}/">Edit</a>
                                 </td>
                             </tr>
                         {% endfor %}
                         <tr>
                             <td colspan="6" style="text-align: center">
-                                <a class="button button-outline" href="schedules/create/">Add New Action</a>
+                                <a class="button button-outline" href="triggers/create/">Add New Trigger</a>
                             </td>
                         </tr>
                         </tbody>

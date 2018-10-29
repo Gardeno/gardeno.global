@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'accounts',
     'grows',
     'safety',
+    'salads',
+    'events',
 ]
 
 if not DEBUG:
@@ -221,3 +223,4 @@ TIME_INPUT_FORMATS = [
     '%-H:%M',
 ]
 
+HASH_IDS_BASE_SALT = os.getenv('HASH_IDS_BASE_SALT')

@@ -1,4 +1,4 @@
-from .models import Grow, Sensor, SensorSetupToken, SensorRelay
+from .models import Grow, Sensor, SensorSetupToken, SensorRelay, SensorSwitch
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from datetime import datetime, timezone
 from django.utils.timezone import activate
@@ -61,6 +61,24 @@ def lookup_relay(function):
             print(exception)
             raise Http404
         request.relay = relay
+        return function(request, *args, **kwargs)
+
+    wrap.__doc__ = function.__doc__
+    wrap.__name__ = function.__name__
+
+    return wrap
+
+
+def lookup_switch(function):
+    def wrap(request, *args, **kwargs):
+        switch_id = kwargs.pop('switch_id', None)
+        if switch_id:
+            try:
+                request.switch = SensorSwitch.objects.get(sensor=request.sensor, identifier=switch_id)
+            except:
+                raise Http404
+        else:
+            request.switch = None
         return function(request, *args, **kwargs)
 
     wrap.__doc__ = function.__doc__

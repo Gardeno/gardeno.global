@@ -196,7 +196,6 @@ class Sensor(BaseModel):
     identifier = models.UUIDField(null=True)
     created_by_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True)
-    type = models.CharField(max_length=50, choices=[(x, x) for x in SENSOR_TYPE_VALUES])
     has_been_setup = models.BooleanField(default=False)
     vpn_config = models.TextField(null=True, blank=True)
     vpn_diagnostics = models.TextField(null=True, blank=True)
@@ -207,7 +206,7 @@ class Sensor(BaseModel):
     aws_thing_id = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.type)
+        return '{}'.format(self.name)
 
     def generate_auth_token(self):
         active_authentication_tokens = self.authentication_tokens.filter(date_deactivated__isnull=True)
@@ -286,6 +285,13 @@ class SensorRelay(models.Model):
     identifier = models.UUIDField(null=True)
     name = models.CharField(max_length=255, null=True)
     pin = models.IntegerField()
+
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+            "name": self.name,
+            "pin": self.pin,
+        }
 
     def __str__(self):
         return '{} - {}'.format(self.sensor, self.name)
@@ -417,6 +423,13 @@ class SensorSwitch(models.Model):
     name = models.CharField(max_length=255, null=True)
     pin = models.IntegerField()
 
+    def to_json(self):
+        return {
+            "identifier": str(self.identifier),
+            "name": self.name,
+            "pin": self.pin,
+        }
+
     def __str__(self):
         return '{} - {}'.format(self.sensor, self.name)
 
@@ -424,7 +437,8 @@ class SensorSwitch(models.Model):
 class SwitchTrigger(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     switch = models.ForeignKey(SensorSwitch, related_name='triggers', on_delete=models.CASCADE)
-    on_action = models.CharField(max_length=10, null=True, choices=ON_OFF_CHOICES)
+    identifier = models.UUIDField(null=True)
+    triggered_when_switch_is = models.CharField(max_length=10, null=True, choices=ON_OFF_CHOICES)
     after_sustained_for_seconds = models.IntegerField(default=0,
                                                       help_text='If 0, trigger will be executed immediately. Otherwise, must be in position for designated number of seconds.')
-    relay = models.ForeignKey(SensorRelay, null=True)
+    trigger_relay = models.ForeignKey(SensorRelay, null=True, on_delete=models.CASCADE)
