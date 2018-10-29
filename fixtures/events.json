@@ -1,0 +1,1 @@
+[{"model": "events.event", "pk": 1, "fields": {"date_created": "2018-10-29T17:14:26.377Z", "date_modified": "2018-10-29T23:10:27.404Z", "name": "Stapleton Men's Social Club", "event_start_utc": "2018-10-30T00:00:00Z", "event_end_utc": "2018-10-30T04:00:00Z", "timezone": "America/Denver"}}]
