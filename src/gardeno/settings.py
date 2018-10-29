@@ -19,7 +19,6 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 import os
-import boto3
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -162,10 +161,6 @@ RAVEN_CONFIG = {
     # 'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
     'release': '0.0.1'
 }
-GREENGRASS_CLIENT = boto3.client('greengrass')
-GREENGRASS_CORE_TYPE_NAME = 'Greengrass_Core'
-
-IOT_CLIENT = boto3.client('iot')
 
 SITE_URL = os.getenv('SITE_URL')
 
