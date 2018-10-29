@@ -2,6 +2,7 @@ from django.contrib import admin
 from events.models import Event
 from salads.admin import SaladInline
 from django.utils.safestring import mark_safe
+from salads.models import SaladFeedback
 
 
 class EventAdmin(admin.ModelAdmin):
@@ -18,3 +19,4 @@ class EventAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Event, EventAdmin)
+admin.site.register(SaladFeedback)

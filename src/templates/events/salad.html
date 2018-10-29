@@ -1,1 +1,16 @@
 {% extends "base_salad.html" %}
+
+{% block content %}
+    <h2>Thanks for trying our salad!</h2>
+    <h3>Enter any thoughts or comments on your salad:</h3>
+    <div style="padding: 0 30px 30px 30px;">
+        <form action="" method="post">
+            <form method="post" action="/notify">
+                {% csrf_token %}
+                <textarea name="comments" placeholder="Enter comments here"></textarea>
+                <input type="email" name="email" required placeholder="Enter your email address"/>
+                <button type="submit">Submit Comments</button>
+            </form>
+        </form>
+    </div>
+{% endblock %}

@@ -30,6 +30,7 @@ def events_detail_salad_lookup(request, event_hash_id, salad_hash_id):
     if request.POST:
         SaladFeedback.objects.create(salad=salad, email=request.POST.get('email', None),
                                      comments=request.POST.get('comments', None))
+        return render(request, 'events/thanks.html')
 
     return render(request, 'events/salad.html', {
         "event": event,
