@@ -1,0 +1,17 @@
+[
+  {
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$100000$wUedPOKQLOBp$wI9S6ZjlNDtgf8U1ouFtODbJVV6QgWD2q8g2GhkNvJY=",
+      "last_login": "2018-06-25T19:33:25.274Z",
+      "email": "chris@gardeno.global",
+      "is_active": true,
+      "is_admin": true,
+      "first_name": "Chris",
+      "last_name": "Cohoat",
+      "email_verified": true,
+      "grow_limit": 0
+    }
+  }
+]
