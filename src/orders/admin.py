@@ -1,11 +1,11 @@
 from django.contrib import admin
-from events.models import Event
+from orders.models import Order
 from salads.admin import SaladInline
 from django.utils.safestring import mark_safe
 
 
-class EventAdmin(admin.ModelAdmin):
-    list_display = ['name', 'event_start_utc', 'event_end_utc', 'timezone']
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['customer']
     inlines = [SaladInline]
 
     readonly_fields = ['label_link']
@@ -17,4 +17,4 @@ class EventAdmin(admin.ModelAdmin):
     label_link.allow_tags = True
 
 
-admin.site.register(Event, EventAdmin)
+admin.site.register(Order, OrderAdmin)

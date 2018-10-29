@@ -1,0 +1,171 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="zxx">
+<head>
+    <title>Gardeno - Hyperlocal salads and produce, delivered</title>
+    <meta name="description"
+          content="Gardeno is a local grower of fresh microgreens that make the most nutritious, delicious, and affordable salads in your area.">
+    <meta name="keywords" content="gardeno, salad delivery, food delivery, healthy food delivery, fresh microgreens">
+    <meta name="author" content="Gardeno Foundation">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <meta name="google-site-verification" content="-5JUMmOr9PgzugD5_xPlhbuiO7QjKMGpczaax6HibSE"/>
+
+    <meta property="og:url" content="https://gardeno.global/"/>
+    <meta property="og:title" content="Gardeno Foundation"/>
+    <meta property="og:description"
+          content="Gardeno is a local grower of fresh microgreens that make the most nutritious, delicious, and affordable salads in your area."/>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', '{{ google_analytics_id }}');
+    </script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #d0f4de;
+        }
+
+        a {
+            text-decoration: none;
+            color: #2c3c44;
+        }
+
+        h1, h2, h3, h4, h5 {
+            margin: 0;
+            padding: 0;
+        }
+
+        ul, li {
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        .content {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100px;
+            bottom: 0;
+            background-color: #d0f4de;
+            color: #2c3c44;
+            padding-top: 100px;
+            text-align: center;
+        }
+
+        .content a, .content a:visited {
+            color: #2c3c44;
+        }
+
+        .content h2 {
+            display: block;
+            font-size: 1.5em;
+            -webkit-margin-before: 0.83em;
+            -webkit-margin-after: 0.83em;
+            -webkit-margin-start: 0px;
+            -webkit-margin-end: 0px;
+            font-weight: bold;
+        }
+
+        .content h3 {
+            display: block;
+            font-size: 1.3em;
+            -webkit-margin-before: 0.83em;
+            -webkit-margin-after: 0.83em;
+            -webkit-margin-start: 0px;
+            -webkit-margin-end: 0px;
+        }
+
+        header {
+            height: 100px;
+            padding: 0 50px;
+        }
+
+        header img.logo {
+            height: 70px;
+            margin-top: 15px;
+        }
+
+        header ul {
+            float: right;
+        }
+
+        header ul li {
+            float: left;
+            margin-left: 20px;
+        }
+
+        header li a {
+            line-height: 100px;
+        }
+
+        header h1 {
+            float: left;
+            line-height: 100px;
+        }
+
+        .clear {
+            clear: both;
+        }
+
+    </style>
+
+    <script>
+        var USER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    </script>
+
+    {% block head_additional %}{% endblock %}
+
+</head>
+<body>
+
+
+<header style="text-align: center;">
+    <a href="/">
+        <img class="logo" src="{% static "images/logo-dark.png" %}" alt="Gardeno Logo"/>
+    </a>
+</header>
+
+<div class="content">
+    <h2>Thanks for trying our salad!</h2>
+    <h3>Enter any thoughts or comments on your salad:</h3>
+    <div style="padding: 0 30px 30px 30px;">
+        <form action="" method="post">
+            <form method="post" action="/notify">
+                {% csrf_token %}
+                <textarea name="comments" placeholder="Enter comments here"></textarea>
+                <input type="email" name="email" required placeholder="Enter your email address"/>
+                <button type="submit">Submit Comments</button>
+            </form>
+        </form>
+    </div>
+    {% block content %}{% endblock %}
+</div>
+
+<link href="{% static "css/milligram.min.css" %}" rel="stylesheet">
+<link href="{% static "vendor/toastr/toastr.min.css" %}" rel="stylesheet">
+<script src="https://unpkg.com/ionicons@4.2.4/dist/ionicons.js"></script>
+
+<script src="{% static "vendor/jquery/jquery-3.3.1.min.js" %}"></script>
+
+{% block foot_additional %}{% endblock %}
+
+<div id="sound_wrapper"></div>
+
+</body>
+</html>

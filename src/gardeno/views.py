@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from accounts.models import LaunchSignup
+from accounts.models import BetaSignup
 
 
 def index(request):
@@ -15,7 +15,7 @@ def notify(request):
     if not email:
         return HttpResponseRedirect('/?error')
     else:
-        LaunchSignup.objects.create(email=email)
+        BetaSignup.objects.create(email=email)
     return HttpResponseRedirect('/?success')
 
 

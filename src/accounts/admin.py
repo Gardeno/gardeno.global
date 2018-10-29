@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.contrib.auth.models import Group
 
-from .models import User, LaunchSignup, Team, TeamMembership
+from .models import User, LaunchSignup, Team, TeamMembership, Customer
 
 
 class UserCreationForm(forms.ModelForm):
@@ -101,3 +101,4 @@ admin.site.register(Team, TeamAdmin)
 # unregister the Group model from admin.
 admin.site.unregister(Group)
 admin.site.register(LaunchSignup, LaunchSignupAdmin)
+admin.site.register(Customer)

@@ -133,6 +133,11 @@ class LaunchSignup(models.Model):
     email = models.EmailField(null=True)
 
 
+class BetaSignup(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    email = models.EmailField(null=True)
+
+
 class Team(models.Model):
     name = models.CharField(max_length=255, null=True)
     users = models.ManyToManyField(User, through="TeamMembership")
@@ -163,3 +168,22 @@ class TeamMembership(models.Model):
         if include_user:
             result["user"] = self.user.to_json()
         return result
+
+
+class Customer(models.Model):
+    email = models.EmailField(null=True, blank=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+
+    @property
+    def name(self):
+        if self.last_name and self.first_name:
+            return '{} {}'.format(self.first_name, self.last_name)
+        elif self.last_name:
+            return self.last_name
+        elif self.first_name:
+            return self.first_name
+        return None
+
+    def __str__(self):
+        return self.name if self.name else self.email

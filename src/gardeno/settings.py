@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'safety',
     'salads',
     'events',
+    'orders',
 ]
 
 if not DEBUG:
