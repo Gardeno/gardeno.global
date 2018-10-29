@@ -73,6 +73,7 @@ To install fixtures in production:
 
 ```
 docker run -it -v $PWD/fixtures:/code/fixtures gardenoglobal_web python3 manage.py loaddata fixtures/events.json
+docker run -it -v $PWD/fixtures:/code/fixtures gardenoglobal_web python3 manage.py loaddata fixtures/accounts.json
 docker run -it -v $PWD/fixtures:/code/fixtures gardenoglobal_web python3 manage.py loaddata fixtures/orders.json
 docker run -it -v $PWD/fixtures:/code/fixtures gardenoglobal_web python3 manage.py loaddata fixtures/salads.json
 ```
