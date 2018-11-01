@@ -85,6 +85,11 @@ class LaunchSignupAdmin(admin.ModelAdmin):
     readonly_fields = ['date_created']
 
 
+class BetaSignupAdmin(admin.ModelAdmin):
+    list_display = ['id', 'date_created', 'email']
+    readonly_fields = ['date_created']
+
+
 class TeamMembershipInline(admin.TabularInline):
     model = TeamMembership
     extra = 0
@@ -102,3 +107,4 @@ admin.site.register(Team, TeamAdmin)
 admin.site.unregister(Group)
 admin.site.register(LaunchSignup, LaunchSignupAdmin)
 admin.site.register(Customer)
+admin.site.register(BetaSignup, BetaSignupAdmin)
