@@ -1,7 +1,25 @@
 {% extends "base_salad.html" %}
 
+{% block head_additional %}
+    <style>
+        h3 {
+            font-weight: bold !important;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <h2>Thanks for trying our salad!</h2>
+    <h3>Ingredients:</h3>
+    <ul>
+        <li>Microgreens</li>
+        {% for ingredient in salad.from_template.ingredients.all %}
+            <li>{{ ingredient }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Harvested:</h3>
+    <p>Yesterday</p>
+    <hr/>
     <h3>Enter any thoughts or comments on your salad:</h3>
     <div style="padding: 0 30px 30px 30px;">
         <form action="" method="post">

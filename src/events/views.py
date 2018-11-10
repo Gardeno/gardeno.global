@@ -22,9 +22,12 @@ def events_detail_label(request, event_id):
     return response
 
 
-def events_detail_salad_lookup(request, event_hash_id, salad_hash_id):
+def events_detail_salad_lookup(request, event_hash_id, salad_hash_id=None):
     event = Event.get_by_hashed_id(event_hash_id)
-    salad = Salad.get_by_hashed_id(salad_hash_id)
+    if salad_hash_id:
+        salad = Salad.get_by_hashed_id(salad_hash_id)
+    else:
+        salad = Salad.objects.all()[0]
     if not event or not salad:
         return HttpResponseRedirect('/')
     if request.POST:

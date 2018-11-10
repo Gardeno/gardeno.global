@@ -25,6 +25,10 @@ class Event(models.Model):
     def label_url(self):
         return "/events/{}/label/".format(self.id)
 
+    @property
+    def salad_url(self):
+        return "/events/{}/salads/".format(self.hashed_id)
+
     @staticmethod
     def get_by_hashed_id(hash_id):
         try:
