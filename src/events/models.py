@@ -19,6 +19,8 @@ class Event(models.Model):
 
     @property
     def hashed_id(self):
+        if not self.id:
+            return None
         return hashids.encode(self.id)
 
     @property
