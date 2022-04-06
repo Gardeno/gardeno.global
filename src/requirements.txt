@@ -47,7 +47,7 @@ rq-scheduler==0.8.3
 s3transfer==0.1.13
 six==1.11.0
 sshpubkeys==3.1.0
-Twisted==18.7.0
+Twisted==22.2.0
 txaio==2.10.0
 urllib3==1.23
 uWSGI==2.0.17.1
